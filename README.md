@@ -60,6 +60,7 @@ The goal is not to claim economic arbitrage, but to demonstrate that predictive 
 
 This distinction—between predictive power and economic exploitability—is intentional.
 
+Calibration diagnostics indicate the model is slightly underconfident (OLS slope > 1) but well calibrated overall (ECE ≈ 0.03). This behavior is preferred to systematic overconfidence and is consistent across field sizes.
 
 
 ---

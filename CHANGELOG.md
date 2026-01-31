@@ -1,4 +1,4 @@
-\# Changelog
+# Changelog
 
 
 
@@ -6,7 +6,7 @@ All notable changes to this project are documented in this file.
 
 
 
-The format follows \[Semantic Versioning](https://semver.org/).
+The format follows [Semantic Versioning](https://semver.org/).
 
 
 
@@ -14,55 +14,61 @@ The format follows \[Semantic Versioning](https://semver.org/).
 
 
 
-\## \[v1.0.1] – Sanity Checks \& Feature Robustness
+## [v1.0.1] – Sanity Checks & Feature Robustness
 
-\### Added
+### Added
 
-\- Automated sanity-check pipeline:
+- Automated sanity-check pipeline:
 
-&nbsp; - leakage keyword scan
+	- leakage keyword scan
 
-&nbsp; - within-race label shuffle control
+	- within-race label shuffle control
 
-&nbsp; - train/test duplicate detection
+	- train/test duplicate detection
 
-\- Feature snapshot artifacts for auditability:
+- Feature snapshot artifacts for auditability:
 
-&nbsp; - `outputs/features/train\_features.parquet`
+	- `outputs/features/train_features.parquet`
 
-&nbsp; - `outputs/features/test\_features.parquet`
+	- `outputs/features/test_features.parquet`
 
-\- Systematic feature ablation runs with logged deltas:
+- Systematic feature ablation runs with logged deltas:
 
-&nbsp; - base model
+	- base model
 
-&nbsp; - no post position
+	- no post position
 
-&nbsp; - no recent-form feature
+	- no recent-form feature
 
-&nbsp; - combined ablation
+	- combined ablation
 
-\- Ablation reports saved as CSV, JSON, and Markdown.
-
-
-
-\### Changed
-
-\- Evaluation workflow now explicitly validates that predictive performance collapses under shuffled labels.
-
-\- Model robustness verified against removal of highly predictive pre-race features.
-
-\- Feature selection hardened to reduce accidental leakage risk.
+- Ablation reports saved as CSV, JSON, and Markdown.
 
 
 
-\### Verified
+### Changed
 
-\- No target leakage or train/test contamination detected.
+- Evaluation workflow now explicitly validates that predictive performance collapses under shuffled labels.
 
-\- Model performance remains stable under feature ablation.
+- Model robustness verified against removal of highly predictive pre-race features.
 
-\- Predictive strength arises from aggregation of multiple weak pre-race signals rather than any single dominant proxy.
+- Feature selection hardened to reduce accidental leakage risk.
+
+
+
+### Verified
+
+- No target leakage or train/test contamination detected.
+
+- Model performance remains stable under feature ablation.
+
+- Predictive strength arises from aggregation of multiple weak pre-race signals rather than any single dominant proxy.
+
+- Model calibration evaluated via reliability curves, ECE, and slope/intercept diagnostics.
+
+- Confirmed slight underconfidence but stable, well-behaved probability estimates.
+
+- Odds-implied baseline exhibits expected overconfidence consistent with known market biases.
 
 
 
@@ -70,25 +76,25 @@ The format follows \[Semantic Versioning](https://semver.org/).
 
 
 
-\## \[v1.0.0] – Initial Public Release
+## [v1.0.0] – Initial Public Release
 
-\### Added
+### Added
 
-\- End-to-end horse race modeling pipeline:
+- End-to-end horse race modeling pipeline:
 
-&nbsp; - data ingestion and normalization
+	- data ingestion and normalization
 
-&nbsp; - feature engineering
+	- feature engineering
 
-&nbsp; - Optuna-tuned XGBoost model
+	- Optuna-tuned XGBoost model
 
-&nbsp; - race-level probability normalization
+	- race-level probability normalization
 
-\- Time-based train/validation/test split.
+- Time-based train/validation/test split.
 
-\- Evaluation metrics and reporting (logloss, Brier, top-k accuracy).
+- Evaluation metrics and reporting (logloss, Brier, top-k accuracy).
 
-\- Baseline comparisons (uniform and odds-implied where available).
+- Baseline comparisons (uniform and odds-implied where available).
 
 
 

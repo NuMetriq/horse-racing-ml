@@ -1,0 +1,71 @@
+# =========================================================
+# Python / Virtual Environments
+# =========================================================
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# =========================================================
+# Jupyter
+# =========================================================
+.ipynb_checkpoints/
+
+# =========================================================
+# Data (raw and processed)
+# =========================================================
+data/raw/
+data/processed/
+**/*.parquet
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+**/*.csv
+
+# =========================================================
+# Outputs (models, predictions, large artifacts)
+# =========================================================
+outputs/
+outputs/models/
+outputs/reports/
+outputs/figures/
+
+# ---------------------------------------------------------
+# Allow small, intentional artifacts for README credibility
+# (uncomment ONLY the ones you explicitly want committed)
+# ---------------------------------------------------------
+!outputs/figures/calibration_model.png
+!outputs/reports/metrics.md
+!outputs/reports/metrics.json
+
+# =========================================================
+# Logs / Caches
+# =========================================================
+*.log
+.cache/
+.pytest_cache/
+.mypy_cache/
+
+# =========================================================
+# OS / Editor noise
+# =========================================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# =========================================================
+# Build / Packaging
+# =========================================================
+build/
+dist/
+*.egg-info/
+
+# =========================================================
+# Kaggle / Credentials
+# =========================================================
+.kaggle/
+kaggle.json

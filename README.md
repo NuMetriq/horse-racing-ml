@@ -46,23 +46,23 @@ This repository focuses on **methodological correctness**, **probability calibra
 
 - **Leakage-safe feature construction**
 
-&nbsp; - All historical aggregates (horse, jockey, trainer form) are computed strictly from past races only
+  - All historical aggregates (horse, jockey, trainer form) are computed strictly from past races only
 
 - **Time-aware evaluation**
 
-&nbsp; - Train / validation / test splits are based on race date (no random shuffling)
+  - Train / validation / test splits are based on race date (no random shuffling)
 
 - **Race-normalized probabilities**
 
-&nbsp; - Predicted win probabilities are normalized within each race to sum to 1
+  - Predicted win probabilities are normalized within each race to sum to 1
 
 - **Proper scoring evaluation**
 
-&nbsp; - Log loss, Brier score, top-k hit rates, and calibration curves
+  - Log loss, Brier score, top-k hit rates, and calibration curves
 
 - **Reproducible pipeline**
 
-&nbsp; - Modular ingestion, feature building, training, and evaluation scripts
+  - Modular ingestion, feature building, training, and evaluation scripts
 
 
 
@@ -249,27 +249,16 @@ Baseline comparisons (uniform, ratings-only, implied odds) are intentionally def
 ```
 
 horse-racing-ml/
-
 ├── src/
-
 │ └── hrml/
-
 │ ├── ingest/ # raw data inspection & normalization
-
 │ ├── features/ # leakage-safe feature construction
-
 │ ├── models/ # training & hyperparameter tuning
-
 │ └── eval/ # evaluation & plotting
-
 ├── configs/
-
 ├── notebooks/
-
 ├── requirements.txt
-
 ├── pyproject.toml
-
 └── README.md
 
 ```
@@ -328,13 +317,9 @@ data/raw/
 ```bash
 
 python -m hrml.ingest.inspect_raw
-
 python -m hrml.ingest.normalize
-
 python -m hrml.features.build_features
-
 python -m hrml.models.train_xgb_optuna
-
 python -m hrml.eval.run_eval
 
 ```
@@ -353,11 +338,11 @@ python -m hrml.eval.run_eval
 
 - Future versions will introduce:
 
-&nbsp;  - ratings-only and market baselines
+  - ratings-only and market baselines
 
-&nbsp;  - learning-to-rank objectives
+  - learning-to-rank objectives
 
-&nbsp;  - deeper calibration analysis
+  - deeper calibration analysis
 
 
 
@@ -367,11 +352,11 @@ python -m hrml.eval.run_eval
 
 ## Versioning
 
-- v1.0.0 -- Leakage-safe pipeline, probabilistic modeling, and proper evaluation
+- **v1.0.0** -- Leakage-safe pipeline, probabilistic modeling, and proper evaluation
 
-- v1.0.1 (planned) -- Baseline comparisons and attribution
+- **v1.0.1** (planned) -- Baseline comparisons and attribution
 
-- v1.1.0 (planned) -- Learning-to-rank formulation
+- **v1.1.0** (planned) -- Learning-to-rank formulation
 
 
 

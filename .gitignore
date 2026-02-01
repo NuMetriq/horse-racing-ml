@@ -1,71 +1,82 @@
-# =========================================================
-# Python / Virtual Environments
-# =========================================================
+# ============================================================
+# Python
+# ============================================================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Virtual environments
 .venv/
 venv/
 ENV/
 env/
-__pycache__/
-*.py[cod]
-*$py.class
 
-# =========================================================
-# Jupyter
-# =========================================================
+# ============================================================
+# Jupyter / IDE
+# ============================================================
 .ipynb_checkpoints/
-
-# =========================================================
-# Data (raw and processed)
-# =========================================================
-data/raw/
-data/processed/
-**/*.parquet
-**/*.db
-**/*.sqlite
-**/*.sqlite3
-**/*.csv
-
-# =========================================================
-# Outputs (models, predictions, large artifacts)
-# =========================================================
-outputs/
-outputs/models/
-outputs/reports/
-outputs/figures/
-
-# ---------------------------------------------------------
-# Allow small, intentional artifacts for README credibility
-# (uncomment ONLY the ones you explicitly want committed)
-# ---------------------------------------------------------
-!outputs/figures/calibration_model.png
-!outputs/reports/metrics.md
-!outputs/reports/metrics.json
-
-# =========================================================
-# Logs / Caches
-# =========================================================
-*.log
-.cache/
-.pytest_cache/
-.mypy_cache/
-
-# =========================================================
-# OS / Editor noise
-# =========================================================
-.DS_Store
-Thumbs.db
 .vscode/
 .idea/
+.spyderproject
+.spyproject
 
-# =========================================================
-# Build / Packaging
-# =========================================================
-build/
-dist/
-*.egg-info/
+# ============================================================
+# OS
+# ============================================================
+.DS_Store
+Thumbs.db
 
-# =========================================================
-# Kaggle / Credentials
-# =========================================================
-.kaggle/
-kaggle.json
+# ============================================================
+# Data & Outputs (default: ignore)
+# ============================================================
+data/raw/
+data/interim/
+
+outputs/
+outputs/**
+
+# ============================================================
+# Models & large artifacts
+# ============================================================
+outputs/models/
+outputs/models/**
+
+# ============================================================
+# Figures (derived)
+# ============================================================
+outputs/figures/
+outputs/figures/**
+
+# ============================================================
+# Feature snapshots (derived, reproducible)
+# ============================================================
+outputs/features/
+outputs/features/**
+
+# ============================================================
+# Predictions (derived)
+# ============================================================
+outputs/reports/pred_test.parquet
+
+# ============================================================
+# ALLOWLIST: Research / validation artifacts
+# ============================================================
+
+# Allow reports directory itself
+!outputs/reports/
+
+# Allow race-level softmax ablation metrics
+!outputs/reports/ablation_softmax_metrics.csv
+!outputs/reports/ablation_softmax_metrics.md
+!outputs/reports/ablation_softmax_metrics.json
+
+# ============================================================
+# Logs
+# ============================================================
+*.log

@@ -13,30 +13,14 @@ The format follows [Semantic Versioning](https://semver.org/).
 ---
 
 
-## v1.1.0 (Unreleased)
+## v1.1.0 — Race-Level Multinomial Softmax Model
 
-### Added
-- Native race-level multinomial (softmax) XGBoost model
-- Custom race-level cross-entropy objective (one winner per race)
-- Race-aware evaluation metrics (top-1 accuracy, top-3 hit rate)
-- Feature ablation framework for robustness validation
-- Calibration diagnostics (ECE, slope/intercept)
-
-### Changed
-- Replaced binary classification + post-hoc race normalization
-  with direct race-level probability modeling
-- Improved probability calibration and sharpness
-- Simplified effective feature set based on ablation results
-
-### Validation
-- Feature ablations show no single feature materially drives performance
-- Removing short-horizon form and post position slightly improves logloss
-- Model significantly outperforms odds baseline across all metrics
-- Calibration slope ≈ 1.0 with low ECE
-
-### Notes
-- This release focuses on correctness, calibration, and robustness
-- No betting strategy or financial optimization is included
+- Introduced a race-level multinomial (softmax) XGBoost model that explicitly enforces one winner per race
+- Implemented a custom race-level cross-entropy objective
+- Added feature ablation experiments to assess robustness and leakage risk
+- Achieved strong out-of-sample calibration (ECE ≈ 0.0036, slope ≈ 1.01)
+- Model substantially outperforms uniform and implied-odds baselines on log loss and Brier score
+- Added CLI flags to support fast reuse of existing models and predictions
 
 
 ---

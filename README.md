@@ -235,7 +235,10 @@ Example outputs (generated on the held-out test set):
 
 - Top-1 accuracy: ~83%
 - Top-3 hit rate: ~97%
-- Strong calibration (ECE < 0.01)
+- Log loss: 0.0845
+- Brier score: 0.0246
+- Expected Calibration Error (ECE): 0.0036
+- Calibration slope: 1.01
 
 The race-level model substantially outperforms both:
 - uniform baselines

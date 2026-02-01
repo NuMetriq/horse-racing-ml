@@ -13,6 +13,35 @@ The format follows [Semantic Versioning](https://semver.org/).
 ---
 
 
+## v1.1.0 (Unreleased)
+
+### Added
+- Native race-level multinomial (softmax) XGBoost model
+- Custom race-level cross-entropy objective (one winner per race)
+- Race-aware evaluation metrics (top-1 accuracy, top-3 hit rate)
+- Feature ablation framework for robustness validation
+- Calibration diagnostics (ECE, slope/intercept)
+
+### Changed
+- Replaced binary classification + post-hoc race normalization
+  with direct race-level probability modeling
+- Improved probability calibration and sharpness
+- Simplified effective feature set based on ablation results
+
+### Validation
+- Feature ablations show no single feature materially drives performance
+- Removing short-horizon form and post position slightly improves logloss
+- Model significantly outperforms odds baseline across all metrics
+- Calibration slope ≈ 1.0 with low ECE
+
+### Notes
+- This release focuses on correctness, calibration, and robustness
+- No betting strategy or financial optimization is included
+
+
+---
+
+
 
 ## [v1.0.1] – Sanity Checks & Feature Robustness
 

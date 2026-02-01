@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -158,22 +159,17 @@ def get_feature_cols(df: pd.DataFrame) -> List[str]:
 # Grouping utilities
 # -----------------------------
 def _ensure_one_winner_per_race(df: pd.DataFrame) -> pd.DataFrame:
-    # Keep only races with exactly one labeled winner (is_winner == 1)
     grp = df.groupby("race_id")["is_winner"].sum()
     good = grp[grp == 1].index
     return df[df["race_id"].isin(good)].copy()
 
 
 def _race_softmax(scores: np.ndarray, race_ids: np.ndarray) -> np.ndarray:
-    """
-    Convert raw scores to probabilities via per-race softmax.
-    Assumes rows are grouped by race_id contiguously OR not—works either way.
-    """
     out = np.zeros_like(scores, dtype=float)
-    df = pd.DataFrame({"race_id": race_ids, "s": scores})
-    for _, idx in df.groupby("race_id", sort=False).indices.items():
+    tmp = pd.DataFrame({"race_id": race_ids, "s": scores})
+    for _, idx in tmp.groupby("race_id", sort=False).indices.items():
         s = scores[idx].astype(float)
-        s = s - np.max(s)  # stabilize
+        s = s - np.max(s)
         ex = np.exp(s)
         denom = np.sum(ex)
         if denom <= 0 or not np.isfinite(denom):
@@ -184,17 +180,10 @@ def _race_softmax(scores: np.ndarray, race_ids: np.ndarray) -> np.ndarray:
 
 
 def make_grouped_dmatrix(df: pd.DataFrame, feat_cols: List[str]) -> Tuple[xgb.DMatrix, pd.DataFrame, np.ndarray]:
-    """
-    Sort so that rows for the same race are contiguous, then set DMatrix group sizes.
-    Returns (dmatrix, sorted_df, group_sizes)
-    """
     d = df.copy()
     d["race_id"] = d["race_id"].astype(str)
-
-    # Sort by date then race_id to keep time order (optional) while still grouping races
     d = d.sort_values(["race_date", "race_id"]).reset_index(drop=True)
 
-    # Group sizes
     sizes = d.groupby("race_id", sort=False).size().to_numpy()
 
     X = d[feat_cols]
@@ -207,9 +196,6 @@ def make_grouped_dmatrix(df: pd.DataFrame, feat_cols: List[str]) -> Tuple[xgb.DM
 
 # -----------------------------
 # Custom objective: race-level softmax cross-entropy
-# Loss per race: -log p(winner)
-# Gradient: p - y
-# Hessian: p*(1-p)  (diagonal approximation)
 # -----------------------------
 def race_softmax_obj(preds: np.ndarray, dtrain: xgb.DMatrix):
     y = dtrain.get_label().astype(int)
@@ -223,7 +209,6 @@ def race_softmax_obj(preds: np.ndarray, dtrain: xgb.DMatrix):
         end = start + gsize
         s = preds[start:end].astype(float)
 
-        # softmax
         s = s - np.max(s)
         ex = np.exp(s)
         denom = np.sum(ex)
@@ -234,7 +219,6 @@ def race_softmax_obj(preds: np.ndarray, dtrain: xgb.DMatrix):
 
         yg = y[start:end].astype(float)
 
-        # gradient + diagonal hessian
         grad[start:end] = p - yg
         hess[start:end] = p * (1.0 - p)
 
@@ -268,45 +252,42 @@ def race_nll_eval(preds: np.ndarray, dmat: xgb.DMatrix):
     return "race_nll", float(np.mean(losses)) if losses else float("nan")
 
 
-def train_and_predict(
-    train: pd.DataFrame,
-    valid: pd.DataFrame,
-    test: pd.DataFrame,
+def train_booster(
+    train_df: pd.DataFrame,
+    valid_df: pd.DataFrame,
     feat_cols: List[str],
     params: Dict,
-) -> pd.DataFrame:
-    # Impute from train only (per ablation)
-    tr = train.copy()
-    va = valid.copy()
-    te = test.copy()
-
-    med = tr[feat_cols].median(numeric_only=True)
-    for split in (tr, va, te):
-        split[feat_cols] = split[feat_cols].fillna(med)
-
-    dtr, _, _ = make_grouped_dmatrix(tr, feat_cols)
-    dva, _, _ = make_grouped_dmatrix(va, feat_cols)
-    dte, te_s, _ = make_grouped_dmatrix(te, feat_cols)
+    *,
+    num_boost_round: int,
+    early_stopping_rounds: int,
+    verbose_eval: bool | int,
+) -> xgb.Booster:
+    dtr, _, _ = make_grouped_dmatrix(train_df, feat_cols)
+    dva, _, _ = make_grouped_dmatrix(valid_df, feat_cols)
 
     booster = xgb.train(
         params=params,
         dtrain=dtr,
-        num_boost_round=1500,
+        num_boost_round=num_boost_round,
         evals=[(dtr, "train"), (dva, "valid")],
         obj=race_softmax_obj,
         custom_metric=race_nll_eval,
         maximize=False,
-        early_stopping_rounds=100,
-        verbose_eval=False,
+        early_stopping_rounds=early_stopping_rounds,
+        verbose_eval=verbose_eval,
     )
+    return booster
 
-    score_te = booster.predict(dte)
-    p_win = _race_softmax(score_te, te_s["race_id"].astype(str).to_numpy())
+
+def predict_table(booster: xgb.Booster, test_df: pd.DataFrame, feat_cols: List[str]) -> pd.DataFrame:
+    dte, te_s, _ = make_grouped_dmatrix(test_df, feat_cols)
+    score = booster.predict(dte)
+    p_win = _race_softmax(score, te_s["race_id"].astype(str).to_numpy())
 
     keep_cols = ["race_id", "race_date", "horse_id", "finish_position", "is_winner", "field_size"]
     keep_cols = [c for c in keep_cols if c in te_s.columns]
     pred = te_s[keep_cols].copy()
-    pred["score"] = score_te
+    pred["score"] = score
     pred["p_win"] = p_win
 
     if "odds_implied_norm" in te_s.columns:
@@ -317,7 +298,32 @@ def train_and_predict(
     return pred
 
 
+def impute_from_train(train_df: pd.DataFrame, other: pd.DataFrame, feat_cols: List[str]) -> Tuple[pd.DataFrame, pd.Series]:
+    med = train_df[feat_cols].median(numeric_only=True)
+    out = other.copy()
+    out[feat_cols] = out[feat_cols].fillna(med)
+    return out, med
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--base-only", action="store_true", help="Skip ablations and train base model only.")
+    parser.add_argument(
+        "--reuse-existing",
+        action="store_true",
+        help="If canonical model + predictions exist, reuse them and exit.",
+    )
+    args = parser.parse_args()
+
+    model_path = OUT_DIR / "xgb_race_softmax.json"
+    pred_path = PRED_DIR / "pred_test.parquet"
+
+    if args.reuse_existing and model_path.exists() and pred_path.exists():
+        print("Reusing existing model and predictions.")
+        print("Model:", model_path)
+        print("Predictions:", pred_path)
+        return
+
     if not DATA_PATH.exists():
         raise FileNotFoundError("Run `python -m hrml.features.build_features` first.")
 
@@ -330,17 +336,15 @@ def main() -> None:
 
     train, valid, test = time_split(df, train_end="2022-12-31", valid_end="2024-12-31")
 
-    # Save feature snapshots (auditability) for BASE feature set (imputed from base train medians)
-    med_base = train[feat_cols].median(numeric_only=True)
-    train_snap = train.copy()
-    test_snap = test.copy()
-    train_snap[feat_cols] = train_snap[feat_cols].fillna(med_base)
-    test_snap[feat_cols] = test_snap[feat_cols].fillna(med_base)
+    # Base imputation & snapshots
+    train_imp, med = impute_from_train(train, train, feat_cols)
+    valid_imp, _ = impute_from_train(train, valid, feat_cols)
+    test_imp, _ = impute_from_train(train, test, feat_cols)
 
-    train_snap[["race_id", "race_date", "horse_id", "is_winner"] + feat_cols].to_parquet(
+    train_imp[["race_id", "race_date", "horse_id", "is_winner"] + feat_cols].to_parquet(
         FEAT_DIR / "train_features.parquet", index=False
     )
-    test_snap[["race_id", "race_date", "horse_id", "is_winner"] + feat_cols].to_parquet(
+    test_imp[["race_id", "race_date", "horse_id", "is_winner"] + feat_cols].to_parquet(
         FEAT_DIR / "test_features.parquet", index=False
     )
     print("Saved feature snapshots:", FEAT_DIR)
@@ -361,68 +365,64 @@ def main() -> None:
     }
 
     # -----------------------------
-    # Feature ablations (softmax)
+    # Optional ablations (fast)
     # -----------------------------
-    def drop(cols: List[str], names: List[str]) -> List[str]:
-        s = set(names)
-        return [c for c in cols if c not in s]
+    if not args.base_only:
+        def drop(cols: List[str], names: List[str]) -> List[str]:
+            s = set(names)
+            return [c for c in cols if c not in s]
 
-    ablations = [
-        ("base", feat_cols),
-        ("no_post_position", drop(feat_cols, ["post_position"])),
-        ("no_horse_mean_finish_last5", drop(feat_cols, ["horse_mean_finish_last5"])),
-        ("no_post_and_form", drop(feat_cols, ["post_position", "horse_mean_finish_last5"])),
-    ]
+        ablations = [
+            ("base", feat_cols),
+            ("no_post_position", drop(feat_cols, ["post_position"])),
+            ("no_horse_mean_finish_last5", drop(feat_cols, ["horse_mean_finish_last5"])),
+            ("no_post_and_form", drop(feat_cols, ["post_position", "horse_mean_finish_last5"])),
+        ]
 
-    rows: List[Dict[str, float]] = []
-    pred_base: Optional[pd.DataFrame] = None
+        rows: List[Dict[str, float]] = []
+        for label, cols in ablations:
+            print(f"[ablation:{label}] n_features={len(cols)}")
 
-    for label, cols in ablations:
-        print(f"[ablation:{label}] n_features={len(cols)}")
-        pred_ab = train_and_predict(train, valid, test, cols, params)
-        m = eval_pred_table(pred_ab, "p_win")
-        m["label"] = label
-        m["n_features"] = int(len(cols))
-        rows.append(m)
+            tr_a, _ = impute_from_train(train, train, cols)
+            va_a, _ = impute_from_train(train, valid, cols)
+            te_a, _ = impute_from_train(train, test, cols)
 
-        if label == "base":
-            pred_base = pred_ab
+            booster_a = train_booster(
+                tr_a,
+                va_a,
+                cols,
+                params,
+                num_boost_round=1500,
+                early_stopping_rounds=100,
+                verbose_eval=False,
+            )
+            pred_a = predict_table(booster_a, te_a, cols)
+            m = eval_pred_table(pred_a, "p_win")
+            m["label"] = label
+            m["n_features"] = int(len(cols))
+            rows.append(m)
 
-    write_ablation_report(rows, PRED_DIR)
+        write_ablation_report(rows, PRED_DIR)
 
-    # Save the canonical model (base) by training once more and persisting booster
-    # (keeps model artifact aligned with base predictions)
-    dtr, _, _ = make_grouped_dmatrix(train_snap, feat_cols)
-    dva, _, _ = make_grouped_dmatrix(
-        valid.assign(**{c: valid[c].fillna(med_base[c]) for c in feat_cols}),
+    # -----------------------------
+    # Canonical base model (single training pass)
+    # -----------------------------
+    booster = train_booster(
+        train_imp,
+        valid_imp,
         feat_cols,
-    )
-
-    booster = xgb.train(
-        params=params,
-        dtrain=dtr,
+        params,
         num_boost_round=5000,
-        evals=[(dtr, "train"), (dva, "valid")],
-        obj=race_softmax_obj,
-        custom_metric=race_nll_eval,
-        maximize=False,
         early_stopping_rounds=200,
         verbose_eval=200,
     )
-
-    model_path = OUT_DIR / "xgb_race_softmax.json"
     booster.save_model(model_path.as_posix())
     print("Saved model:", model_path)
 
-    # Write base predictions to the standard location used by eval scripts
-    if pred_base is None:
-        raise RuntimeError("Base ablation did not run; cannot write pred_test.parquet.")
+    pred_base = predict_table(booster, test_imp, feat_cols)
+    pred_base.to_parquet(pred_path, index=False)
+    print("Saved predictions:", pred_path)
 
-    out_pred = PRED_DIR / "pred_test.parquet"
-    pred_base.to_parquet(out_pred, index=False)
-    print("Saved predictions:", out_pred)
-
-    # quick sanity logloss on runner rows
     y = pred_base["is_winner"].astype(int).to_numpy()
     p = np.clip(pred_base["p_win"].astype(float).to_numpy(), 1e-12, 1 - 1e-12)
     print("Test logloss (runner rows):", float(log_loss(y, p)))

@@ -129,29 +129,19 @@ def time_split(df: pd.DataFrame, train_end: str, valid_end: str) -> Tuple[pd.Dat
 
 
 # -----------------------------
-# Feature selection
-# (keep same default as v1.0.x for now)
+# Feature selection (Issue #3)
+# Deterministic allowlist + strict unknown numeric check
 # -----------------------------
-def get_feature_cols(df: pd.DataFrame) -> List[str]:
-    drop = {
-        "race_id",
-        "race_date",
-        "course",
-        "horse_id",
-        "jockey_id",
-        "trainer_id",
-        "finish_position",
-        "is_winner",
-        "odds_implied",
-        "odds_implied_norm",
-        "race_date_ord",
-    }
-    cols: List[str] = []
-    for c in df.columns:
-        if c in drop:
-            continue
-        if pd.api.types.is_numeric_dtype(df[c]):
-            cols.append(c)
+def get_feature_cols(df: pd.DataFrame, *, strict: bool = True) -> List[str]:
+    policy = FeatureAllowlist(strict_unknown_numeric=strict)
+    cols = policy.select(df)
+
+    # Extra hard-stop: never allow obvious post-race labels as features
+    forbidden = {"is_winner", "finish_position"}
+    overlap = forbidden.intersection(cols)
+    if overlap:
+        raise AssertionError(f"Forbidden leakage columns present in features: {sorted(overlap)}")
+
     return cols
 
 
@@ -331,8 +321,13 @@ def main() -> None:
     df = df[pd.notnull(df["race_date"]) & pd.notnull(df["is_winner"])].copy()
     df = _ensure_one_winner_per_race(df)
 
-    feat_cols = get_feature_cols(df)
+    feat_cols = get_feature_cols(df, strict=True)
     print("Feature columns:", len(feat_cols))
+
+    # Log final feature list deterministically (Issue #3)
+    manifest = write_feature_manifest(feat_cols, PRED_DIR / "feature_list.json")
+    print("Feature manifest:", manifest["n_features"], "features | sha256:", manifest["sha256"])
+    print("Saved feature manifest:", PRED_DIR / "feature_list.json")
 
     train, valid, test = time_split(df, train_end="2022-12-31", valid_end="2024-12-31")
 

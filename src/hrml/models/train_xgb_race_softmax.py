@@ -10,6 +10,8 @@ import pandas as pd
 import xgboost as xgb
 from sklearn.metrics import log_loss
 
+from hrml.features.allowlist import FeatureAllowlist, write_feature_manifest
+
 DATA_PATH = Path("data/processed/model_frame.parquet")
 
 OUT_DIR = Path("outputs/models")
@@ -303,12 +305,17 @@ def main() -> None:
         action="store_true",
         help="If canonical model + predictions exist, reuse them and exit.",
     )
+    parser.add_argument(
+        "--features-only",
+        action="store_true",
+        help="Only compute feature columns + write manifest, then exit (no training).",
+    )
     args = parser.parse_args()
 
     model_path = OUT_DIR / "xgb_race_softmax.json"
     pred_path = PRED_DIR / "pred_test.parquet"
 
-    if args.reuse_existing and model_path.exists() and pred_path.exists():
+    if args.reuse_existing and not args.features_only and model_path.exists() and pred_path.exists():
         print("Reusing existing model and predictions.")
         print("Model:", model_path)
         print("Predictions:", pred_path)
@@ -328,6 +335,10 @@ def main() -> None:
     manifest = write_feature_manifest(feat_cols, PRED_DIR / "feature_list.json")
     print("Feature manifest:", manifest["n_features"], "features | sha256:", manifest["sha256"])
     print("Saved feature manifest:", PRED_DIR / "feature_list.json")
+
+    if args.features_only:
+        print("Features-only mode: exiting before training.")
+        return
 
     train, valid, test = time_split(df, train_end="2022-12-31", valid_end="2024-12-31")
 

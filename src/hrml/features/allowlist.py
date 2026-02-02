@@ -29,13 +29,20 @@ DEFAULT_BLOCKLIST: set[str] = {
     "won",
     "starting_price",  # if you ever have it
     "sp",  # generic
+    "field_size_r",
+    "sp_decimal",
+    "odds_implied",
+    "odds_implied_norm",
 }
 
 # If these appear as numeric columns and aren't explicitly allowed/prefixed, we fail.
 DEFAULT_LEAKAGE_PATTERNS: tuple[str, ...] = (
     "finish",
-    "pos",
+    "finish_",
+    "finishposition",
+    "finish_position",
     "place",
+    "placing",
     "time",
     "result",
     "winner",
@@ -60,10 +67,15 @@ class FeatureAllowlist:
         "field_size",
         "race_class",
         # odds baseline
-        "odds_implied",
-        "odds_implied_norm",
+        #"odds_implied",
+        #"odds_implied_norm",
         # add others only if you are sure they're pre-race
         # e.g. "going" if encoded safely downstream
+        "post_position",
+        "weight_lbs",
+        "or_rating",
+        "rpr_rating",
+        "ts_rating",
     )
     prefixes: tuple[str, ...] = (
         "horse_",

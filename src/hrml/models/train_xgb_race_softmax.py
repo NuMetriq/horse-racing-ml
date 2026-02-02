@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -94,7 +94,8 @@ def write_ablation_report(rows: List[Dict[str, float]], out_dir: Path) -> None:
     ]
     for _, r in df[cols].iterrows():
         lines.append(
-            "| " + " | ".join(
+            "| "
+            + " | ".join(
                 [
                     str(r["label"]),
                     str(int(r["n_races"])),
@@ -134,6 +135,27 @@ def time_split(df: pd.DataFrame, train_end: str, valid_end: str) -> Tuple[pd.Dat
 # Feature selection (Issue #3)
 # Deterministic allowlist + strict unknown numeric check
 # -----------------------------
+def _assert_features_numeric(df: pd.DataFrame, feat_cols: List[str]) -> None:
+    """
+    Guard against mixed/extension dtypes where pandas "looks numeric" but contains strings
+    (e.g. race_class = 'Class 6'). XGBoost requires float-convertible features.
+    """
+    bad: List[str] = []
+    for c in feat_cols:
+        try:
+            pd.to_numeric(df[c], errors="raise")
+        except Exception:
+            bad.append(c)
+    if bad:
+        sample = {c: df[c].dropna().astype(str).head(3).tolist() for c in bad}
+        raise TypeError(
+            "Some selected feature columns are not coercible to numeric. "
+            "Remove/encode them explicitly.\n"
+            f"bad_features={bad}\n"
+            f"samples={sample}"
+        )
+
+
 def get_feature_cols(df: pd.DataFrame, *, strict: bool = True) -> List[str]:
     policy = FeatureAllowlist(strict_unknown_numeric=strict)
     cols = policy.select(df)
@@ -144,6 +166,8 @@ def get_feature_cols(df: pd.DataFrame, *, strict: bool = True) -> List[str]:
     if overlap:
         raise AssertionError(f"Forbidden leakage columns present in features: {sorted(overlap)}")
 
+    # Additional guard: ensure selected features are numerically coercible
+    _assert_features_numeric(df, cols)
     return cols
 
 
@@ -178,7 +202,10 @@ def make_grouped_dmatrix(df: pd.DataFrame, feat_cols: List[str]) -> Tuple[xgb.DM
 
     sizes = d.groupby("race_id", sort=False).size().to_numpy()
 
-    X = d[feat_cols]
+    # Ensure features are numeric before handing to XGBoost
+    _assert_features_numeric(d, feat_cols)
+    X = d[feat_cols].apply(pd.to_numeric, errors="raise")
+
     y = d["is_winner"].astype(int).to_numpy()
 
     dm = xgb.DMatrix(X, label=y)
@@ -343,7 +370,7 @@ def main() -> None:
     train, valid, test = time_split(df, train_end="2022-12-31", valid_end="2024-12-31")
 
     # Base imputation & snapshots
-    train_imp, med = impute_from_train(train, train, feat_cols)
+    train_imp, _ = impute_from_train(train, train, feat_cols)
     valid_imp, _ = impute_from_train(train, valid, feat_cols)
     test_imp, _ = impute_from_train(train, test, feat_cols)
 
@@ -374,6 +401,7 @@ def main() -> None:
     # Optional ablations (fast)
     # -----------------------------
     if not args.base_only:
+
         def drop(cols: List[str], names: List[str]) -> List[str]:
             s = set(names)
             return [c for c in cols if c not in s]

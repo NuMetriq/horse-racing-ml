@@ -65,7 +65,6 @@ class FeatureAllowlist:
         # race-level context (safe pre-race fields)
         "dist_f",
         "field_size",
-        "race_class",
         # odds baseline
         #"odds_implied",
         #"odds_implied_norm",

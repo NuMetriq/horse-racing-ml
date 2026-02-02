@@ -1,0 +1,103 @@
+{
+  "columns": {
+    "race_col": "race_id",
+    "score_col": "score",
+    "winner_col": "is_winner"
+  },
+  "aggregate": {
+    "n_races_total": 13607,
+    "n_races_used": 13607,
+    "n_races_skipped_no_winner": 0,
+    "n_races_multi_winner_label": 0,
+    "mean_winner_rank": 1.3782611890938488,
+    "median_winner_rank": 1.0,
+    "mrr": 0.8908196977646525,
+    "ndcg@3": 0.9036481346134901,
+    "ndcg@5": 0.9120902017665441,
+    "pct_winner_in_top3": 0.9608289850812082,
+    "pct_winner_in_top5": 0.9811861541853458,
+    "pct_winner_top1": 0.8158300874549864
+  },
+  "per_race_preview": [
+    {
+      "race_id": "894652",
+      "n_runners": 16,
+      "winner_rank": 16,
+      "mrr": 0.0625,
+      "ndcg@3": 0.0,
+      "ndcg@5": 0.0
+    },
+    {
+      "race_id": "905098",
+      "n_runners": 18,
+      "winner_rank": 16,
+      "mrr": 0.0625,
+      "ndcg@3": 0.0,
+      "ndcg@5": 0.0
+    },
+    {
+      "race_id": "899517",
+      "n_runners": 16,
+      "winner_rank": 15,
+      "mrr": 0.06666666666666667,
+      "ndcg@3": 0.0,
+      "ndcg@5": 0.0
+    },
+    {
+      "race_id": "902839",
+      "n_runners": 16,
+      "winner_rank": 15,
+      "mrr": 0.06666666666666667,
+      "ndcg@3": 0.0,
+      "ndcg@5": 0.0
+    },
+    {
+      "race_id": "895539",
+      "n_runners": 18,
+      "winner_rank": 15,
+      "mrr": 0.06666666666666667,
+      "ndcg@3": 0.0,
+      "ndcg@5": 0.0
+    },
+    {
+      "race_id": "897939",
+      "n_runners": 17,
+      "winner_rank": 15,
+      "mrr": 0.06666666666666667,
+      "ndcg@3": 0.0,
+      "ndcg@5": 0.0
+    },
+    {
+      "race_id": "894256",
+      "n_runners": 15,
+      "winner_rank": 14,
+      "mrr": 0.07142857142857142,
+      "ndcg@3": 0.0,
+      "ndcg@5": 0.0
+    },
+    {
+      "race_id": "893102",
+      "n_runners": 14,
+      "winner_rank": 14,
+      "mrr": 0.07142857142857142,
+      "ndcg@3": 0.0,
+      "ndcg@5": 0.0
+    },
+    {
+      "race_id": "894651",
+      "n_runners": 14,
+      "winner_rank": 14,
+      "mrr": 0.07142857142857142,
+      "ndcg@3": 0.0,
+      "ndcg@5": 0.0
+    },
+    {
+      "race_id": "899518",
+      "n_runners": 15,
+      "winner_rank": 13,
+      "mrr": 0.07692307692307693,
+      "ndcg@3": 0.0,
+      "ndcg@5": 0.0
+    }
+  ]
+}

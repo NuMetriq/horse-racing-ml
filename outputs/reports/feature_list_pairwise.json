@@ -1,0 +1,20 @@
+{
+  "n_features": 14,
+  "sha256": "e2c243b41b6c6438b8fde2b24f34eda21ca7eb68e03eb9fe04d54cf4ad225d55",
+  "features": [
+    "dist_f",
+    "field_size",
+    "horse_days_since_last",
+    "horse_mean_finish_last5",
+    "horse_starts_365d",
+    "horse_win_rate_last10",
+    "jockey_trainer_win_rate_exp",
+    "jockey_win_rate_exp",
+    "or_rating",
+    "post_position",
+    "rpr_rating",
+    "trainer_win_rate_exp",
+    "ts_rating",
+    "weight_lbs"
+  ]
+}

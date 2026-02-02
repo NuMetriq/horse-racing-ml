@@ -83,6 +83,28 @@ def cmd_eval_ranking(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_eval_calibration_strata(args) -> int:
+    from hrml.eval.calibration_strata import CalibrationStrataConfig, run_calibration_strata
+
+    cfg = CalibrationStrataConfig(
+        pred_path=Path(args.pred_path),
+        model_frame_path=Path(args.model_frame_path),
+        out_json=Path(args.out_json),
+        out_md=Path(args.out_md),
+        fig_dir=Path(args.fig_dir),
+        prob_col=args.prob_col,
+        label_col=args.label_col,
+        n_bins=args.n_bins,
+    )
+    rep = run_calibration_strata(cfg)
+    print("=== Calibration strata ===")
+    print("overall_ece=", f"{rep['overall']['ece']:.6f}")
+    print("wrote_json=", cfg.out_json)
+    print("wrote_md=", cfg.out_md)
+    print("fig_dir=", cfg.fig_dir)
+    return 0
+
+
 def cmd_paths(_: argparse.Namespace) -> int:
     """
     Quick helper to print common project paths (handy when debugging runs).
@@ -174,6 +196,19 @@ def build_parser() -> argparse.ArgumentParser:
     p_ver = sub.add_parser("version", help="Print hrml version (if available).")
     _add_common_args(p_ver)
     p_ver.set_defaults(func=cmd_version)
+
+    # eval-calibration-strata (Issue #2)
+    p_cal = sub.add_parser("eval-calibration-strata", help="Calibration diagnostics by race strata (ECE + reliability plots).")
+    p_cal.add_argument("--pred-path", default="outputs/reports/pred_test.parquet")
+    p_cal.add_argument("--model-frame-path", default="data/processed/model_frame.parquet")
+    p_cal.add_argument("--out-json", default="outputs/reports/calibration_strata.json")
+    p_cal.add_argument("--out-md", default="outputs/reports/calibration_strata.md")
+    p_cal.add_argument("--fig-dir", default="outputs/figures")
+    p_cal.add_argument("--prob-col", default="p_win")
+    p_cal.add_argument("--label-col", default="is_winner")
+    p_cal.add_argument("--n-bins", type=int, default=15)
+    _add_common_args(p_cal)
+    p_cal.set_defaults(func=cmd_eval_calibration_strata)
 
     return parser
 

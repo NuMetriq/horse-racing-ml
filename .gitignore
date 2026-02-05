@@ -11,7 +11,9 @@ __pycache__/
 dist/
 build/
 
+# ============================================================
 # Virtual environments
+# ============================================================
 .venv/
 venv/
 ENV/
@@ -33,43 +35,29 @@ env/
 Thumbs.db
 
 # ============================================================
-# Data & Outputs (default: ignore)
+# Data (generated / large)
 # ============================================================
 data/
-data/raw/
-data/interim/
+data/**
 
+# ============================================================
+# Outputs (generated / large)
+# ============================================================
 outputs/
 outputs/**
 
 # ============================================================
-# Models & large artifacts
+# Logs
 # ============================================================
-outputs/models/
-outputs/models/**
+*.log
 
 # ============================================================
-# Figures (derived)
-# ============================================================
-outputs/figures/
-outputs/figures/**
-
-# ============================================================
-# Feature snapshots (derived, reproducible)
-# ============================================================
-outputs/features/
-outputs/features/**
-
-# ============================================================
-# Predictions (derived)
-# ============================================================
-outputs/reports/pred_test.parquet
-
-# ============================================================
-# ALLOWLIST: Research / validation artifacts
+# ALLOWLIST: curated research artifacts to keep in git
+# (Must re-include parent directories BEFORE files.)
 # ============================================================
 
 # Allow reports directory itself
+!outputs
 !outputs/reports/
 
 # Allow race-level softmax ablation metrics
@@ -77,7 +65,20 @@ outputs/reports/pred_test.parquet
 !outputs/reports/ablation_softmax_metrics.md
 !outputs/reports/ablation_softmax_metrics.json
 
-# ============================================================
-# Logs
-# ============================================================
-*.log
+# Model Comparison report (Issue #8)
+!outputs/reports/model_comparison.md
+
+# (Optional) keep feature manifests if you want reproducibility audits
+# !outputs/reports/feature_list.json
+# !outputs/reports/feature_list_pairwise.json
+# !outputs/reports/feature_list_plackett_luce.json
+
+# (Optional) keep small metrics summaries if you want paper-trail
+# !outputs/reports/metrics_ranking.json
+# !outputs/reports/metrics_ranking.md
+# !outputs/reports/metrics_ranking_pairwise.json
+# !outputs/reports/metrics_ranking_pairwise.md
+# !outputs/reports/metrics_ranking_plackett_luce.json
+# !outputs/reports/metrics_ranking_plackett_luce.md
+# !outputs/reports/calibration_strata.json
+# !outputs/reports/calibration_strata.md

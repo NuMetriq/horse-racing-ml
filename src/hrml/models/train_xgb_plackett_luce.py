@@ -473,7 +473,17 @@ def main() -> None:
         action="store_true",
         help="Disable temperature scaling on p_win (keeps p_win_raw == p_win).",
     )
+    parser.add_argument(
+        "--base-only",
+        action="store_true",
+        help="CLI consistency flag: disables calibration + MC extras (training remains identical).",
+    )
     args = parser.parse_args()
+
+    if args.base_only:
+        print("Note: --base-only disables calibration + MC outputs (training is unchanged).")
+        args.mc_samples = 0
+        args.no_calibrate = True
 
     cfg = PLConfig(top_k=int(args.top_k), mc_samples=int(args.mc_samples), place_k=int(args.place_k))
 
@@ -481,10 +491,14 @@ def main() -> None:
     pred_path = REPORT_DIR / "pred_test_plackett_luce.parquet"
     temp_path = OUT_DIR / "xgb_plackett_luce_temperature.json"
 
-    if args.reuse_existing and not args.features_only and model_path.exists() and pred_path.exists():
+    can_reuse = model_path.exists() and pred_path.exists() and (args.no_calibrate or temp_path.exists())
+    
+    if args.reuse_existing and not args.features_only and can_reuse:
         print("Reusing existing model and predictions.")
         print("Model:", model_path)
         print("Predictions:", pred_path)
+        if not args.no_calibrate:
+            print("Temperature:", temp_path)
         return
 
     if not DATA_PATH.exists():

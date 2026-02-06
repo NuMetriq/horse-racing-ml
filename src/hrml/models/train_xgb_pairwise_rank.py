@@ -42,7 +42,9 @@ def _ensure_one_winner_per_race(df: pd.DataFrame) -> pd.DataFrame:
     return df[df["race_id"].isin(good)].copy()
 
 
-def impute_from_train(train_df: pd.DataFrame, other: pd.DataFrame, feat_cols: List[str]) -> Tuple[pd.DataFrame, pd.Series]:
+def impute_from_train(
+    train_df: pd.DataFrame, other: pd.DataFrame, feat_cols: List[str]
+) -> Tuple[pd.DataFrame, pd.Series]:
     med = train_df[feat_cols].median(numeric_only=True)
     out = other.copy()
     out[feat_cols] = out[feat_cols].fillna(med)
@@ -92,11 +94,9 @@ def make_grouped_dmatrix(df: pd.DataFrame, feat_cols: List[str]) -> Tuple[xgb.DM
 
     sizes = d.groupby("race_id", sort=False).size().to_numpy()
 
-    # Ensure features are numeric before handing to XGBoost
     _assert_features_numeric(d, feat_cols)
     X = d[feat_cols].apply(pd.to_numeric, errors="raise")
 
-    # winner=1, others=0 works fine for rank:pairwise
     y = d["is_winner"].astype(int).to_numpy()
 
     dm = xgb.DMatrix(X, label=y)
@@ -108,13 +108,11 @@ def get_feature_cols(df: pd.DataFrame, *, strict: bool = True) -> List[str]:
     policy = FeatureAllowlist(strict_unknown_numeric=strict)
     cols = policy.select(df)
 
-    # extra hard-stop
     forbidden = {"is_winner", "finish_position"}
     overlap = forbidden.intersection(cols)
     if overlap:
         raise AssertionError(f"Forbidden leakage columns present in features: {sorted(overlap)}")
 
-    # additional guard: ensure selected features are numerically coercible
     _assert_features_numeric(df, cols)
     return cols
 
@@ -123,14 +121,14 @@ def predict_table(booster: xgb.Booster, test_df: pd.DataFrame, feat_cols: List[s
     dte, te_s, _ = make_grouped_dmatrix(test_df, feat_cols)
     score = booster.predict(dte)
 
-    # Provide a normalized per-race probability-like output for downstream diagnostics
+    # probability-like normalization (NOT calibrated; for diagnostics only)
     p_rank = _race_softmax(score, te_s["race_id"].astype(str).to_numpy())
 
     keep_cols = ["race_id", "race_date", "horse_id", "finish_position", "is_winner", "field_size"]
     keep_cols = [c for c in keep_cols if c in te_s.columns]
     pred = te_s[keep_cols].copy()
     pred["score"] = score
-    pred["p_rank"] = p_rank  # not a true calibrated probability; useful for comparisons
+    pred["p_rank"] = p_rank
 
     return pred
 
@@ -162,15 +160,20 @@ def train_pairwise(
 
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--base-only", action="store_true", help="No-op for pairwise (kept for CLI consistency).")
     parser.add_argument("--reuse-existing", action="store_true", help="Reuse canonical model+predictions if present.")
-    parser.add_argument("--features-only", action="store_true", help="Only build feature list + manifest then exit.")
     parser.add_argument("--fast-dev", action="store_true", help="Fast dev mode: fewer rounds for quick iteration.")
+    parser.add_argument("--features-only", action="store_true", help="Only build feature list + manifest then exit.")
     args = parser.parse_args()
+
+    if args.base_only:
+        print("Note: --base-only is a no-op for pairwise ranking (no ablations/extras implemented).")
 
     model_path = OUT_DIR / "xgb_rank_pairwise.json"
     pred_path = REPORT_DIR / "pred_test_pairwise.parquet"
     metrics_path = REPORT_DIR / "metrics_pairwise.json"
 
+    # Issue #8: no accidental full retraining
     if args.reuse_existing and not args.features_only and model_path.exists() and pred_path.exists():
         print("Reusing existing model and predictions.")
         print("Model:", model_path)
@@ -199,7 +202,6 @@ def main() -> None:
     valid_imp, _ = impute_from_train(train, valid, feat_cols)
     test_imp, _ = impute_from_train(train, test, feat_cols)
 
-    # Pairwise rank objective (fast)
     params: Dict = {
         "objective": "rank:pairwise",
         "eval_metric": "ndcg@5",
@@ -221,7 +223,6 @@ def main() -> None:
         early_stop = 50
         verbose_eval = 50
     else:
-        # intentionally smaller than softmax training to meet your "<50%" bar
         num_boost_round = 1500
         early_stop = 100
         verbose_eval = 200
@@ -243,8 +244,7 @@ def main() -> None:
     pred.to_parquet(pred_path, index=False)
     print("Saved predictions:", pred_path)
 
-    # lightweight metrics summary (race-aware via winner rank)
-    # You can do full eval via hrml.cli eval-ranking
+    # lightweight metrics summary (race-aware)
     from hrml.eval.ranking import RankingEvalConfig, run_ranking_eval
 
     cfg = RankingEvalConfig(

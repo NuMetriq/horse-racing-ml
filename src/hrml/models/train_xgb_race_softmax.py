@@ -132,14 +132,9 @@ def time_split(df: pd.DataFrame, train_end: str, valid_end: str) -> Tuple[pd.Dat
 
 
 # -----------------------------
-# Feature selection (Issue #3)
-# Deterministic allowlist + strict unknown numeric check
+# Feature selection
 # -----------------------------
 def _assert_features_numeric(df: pd.DataFrame, feat_cols: List[str]) -> None:
-    """
-    Guard against mixed/extension dtypes where pandas "looks numeric" but contains strings
-    (e.g. race_class = 'Class 6'). XGBoost requires float-convertible features.
-    """
     bad: List[str] = []
     for c in feat_cols:
         try:
@@ -160,13 +155,11 @@ def get_feature_cols(df: pd.DataFrame, *, strict: bool = True) -> List[str]:
     policy = FeatureAllowlist(strict_unknown_numeric=strict)
     cols = policy.select(df)
 
-    # Extra hard-stop: never allow obvious post-race labels as features
     forbidden = {"is_winner", "finish_position"}
     overlap = forbidden.intersection(cols)
     if overlap:
         raise AssertionError(f"Forbidden leakage columns present in features: {sorted(overlap)}")
 
-    # Additional guard: ensure selected features are numerically coercible
     _assert_features_numeric(df, cols)
     return cols
 
@@ -202,7 +195,6 @@ def make_grouped_dmatrix(df: pd.DataFrame, feat_cols: List[str]) -> Tuple[xgb.DM
 
     sizes = d.groupby("race_id", sort=False).size().to_numpy()
 
-    # Ensure features are numeric before handing to XGBoost
     _assert_features_numeric(d, feat_cols)
     X = d[feat_cols].apply(pd.to_numeric, errors="raise")
 
@@ -237,7 +229,6 @@ def race_softmax_obj(preds: np.ndarray, dtrain: xgb.DMatrix):
             p = ex / denom
 
         yg = y[start:end].astype(float)
-
         grad[start:end] = p - yg
         hess[start:end] = p * (1.0 - p)
 
@@ -327,21 +318,15 @@ def impute_from_train(train_df: pd.DataFrame, other: pd.DataFrame, feat_cols: Li
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-only", action="store_true", help="Skip ablations and train base model only.")
-    parser.add_argument(
-        "--reuse-existing",
-        action="store_true",
-        help="If canonical model + predictions exist, reuse them and exit.",
-    )
-    parser.add_argument(
-        "--features-only",
-        action="store_true",
-        help="Only compute feature columns + write manifest, then exit (no training).",
-    )
+    parser.add_argument("--reuse-existing", action="store_true", help="Reuse canonical model + predictions if present, then exit.")
+    parser.add_argument("--fast-dev", action="store_true", help="Fast dev mode: fewer rounds (and skips ablations).")
+    parser.add_argument("--features-only", action="store_true", help="Only build feature list + manifest then exit.")
     args = parser.parse_args()
 
     model_path = OUT_DIR / "xgb_race_softmax.json"
     pred_path = PRED_DIR / "pred_test.parquet"
 
+    # Issue #8: avoid accidental full retraining
     if args.reuse_existing and not args.features_only and model_path.exists() and pred_path.exists():
         print("Reusing existing model and predictions.")
         print("Model:", model_path)
@@ -358,7 +343,6 @@ def main() -> None:
     feat_cols = get_feature_cols(df, strict=True)
     print("Feature columns:", len(feat_cols))
 
-    # Log final feature list deterministically (Issue #3)
     manifest = write_feature_manifest(feat_cols, PRED_DIR / "feature_list.json")
     print("Feature manifest:", manifest["n_features"], "features | sha256:", manifest["sha256"])
     print("Saved feature manifest:", PRED_DIR / "feature_list.json")
@@ -369,11 +353,12 @@ def main() -> None:
 
     train, valid, test = time_split(df, train_end="2022-12-31", valid_end="2024-12-31")
 
-    # Base imputation & snapshots
     train_imp, _ = impute_from_train(train, train, feat_cols)
     valid_imp, _ = impute_from_train(train, valid, feat_cols)
     test_imp, _ = impute_from_train(train, test, feat_cols)
 
+    # feature snapshots (ignored by git; fine)
+    FEAT_DIR.mkdir(parents=True, exist_ok=True)
     train_imp[["race_id", "race_date", "horse_id", "is_winner"] + feat_cols].to_parquet(
         FEAT_DIR / "train_features.parquet", index=False
     )
@@ -397,10 +382,16 @@ def main() -> None:
         "verbosity": 0,
     }
 
-    # -----------------------------
-    # Optional ablations (fast)
-    # -----------------------------
-    if not args.base_only:
+    # Issue #8: consistent fast-dev schedule
+    if args.fast_dev:
+        ablation_rounds, ablation_early = 600, 50
+        base_rounds, base_early, base_verbose = 1200, 75, 50
+    else:
+        ablation_rounds, ablation_early = 1500, 100
+        base_rounds, base_early, base_verbose = 5000, 200, 200
+
+    # Optional ablations (skip in fast-dev)
+    if (not args.base_only) and (not args.fast_dev):
 
         def drop(cols: List[str], names: List[str]) -> List[str]:
             s = set(names)
@@ -426,8 +417,8 @@ def main() -> None:
                 va_a,
                 cols,
                 params,
-                num_boost_round=1500,
-                early_stopping_rounds=100,
+                num_boost_round=ablation_rounds,
+                early_stopping_rounds=ablation_early,
                 verbose_eval=False,
             )
             pred_a = predict_table(booster_a, te_a, cols)
@@ -437,18 +428,18 @@ def main() -> None:
             rows.append(m)
 
         write_ablation_report(rows, PRED_DIR)
+    elif (not args.base_only) and args.fast_dev:
+        print("Note: --fast-dev enabled; skipping ablations (run without --fast-dev to generate ablation report).")
 
-    # -----------------------------
-    # Canonical base model (single training pass)
-    # -----------------------------
+    # Canonical base model
     booster = train_booster(
         train_imp,
         valid_imp,
         feat_cols,
         params,
-        num_boost_round=5000,
-        early_stopping_rounds=200,
-        verbose_eval=200,
+        num_boost_round=base_rounds,
+        early_stopping_rounds=base_early,
+        verbose_eval=base_verbose,
     )
     booster.save_model(model_path.as_posix())
     print("Saved model:", model_path)

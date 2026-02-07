@@ -1,4 +1,4 @@
-\# Pipeline Contract
+# Pipeline Contract
 
 
 
@@ -12,13 +12,13 @@
 
 | ingest | raw data sources | canonical race tables | labels, odds |
 
-| features | canonical table | X, race\_ids, runner\_ids | outcomes |
+| features | canonical table | X, race_ids, runner_ids | outcomes |
 
 | model | X | scores or logits | odds, policies |
 
-| calibration | scores, outcomes (train only) | calibrated p\_win | odds, policies |
+| calibration | scores, outcomes (train only) | calibrated p_win | odds, policies |
 
-| policy | p\_win, odds, race structure | bets (runner, stake) | labels |
+| policy | p_win, odds, race structure | bets (runner, stake) | labels |
 
 | evaluation | bets, outcomes | metrics, plots | model internals |
 

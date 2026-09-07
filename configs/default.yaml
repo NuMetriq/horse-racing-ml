@@ -13,6 +13,29 @@ model:
   early_stopping_rounds: 200
   n_trials: 50
 
+model:
+  softmax:
+    base_only: false
+    reuse_existing: false
+    fast_dev: false
+    features_only: false
+
+  pairwise:
+    base_only: false
+    reuse_existing: false
+    fast_dev: false
+    features_only: false
+
+  plackett_luce:
+    reuse_existing: false
+    features_only: false
+    fast_dev: false
+    top_k: 3
+    mc_samples: 200
+    place_k: 3
+    no_calibrate: false
+    base_only: false
+
 features:
   use_odds: true
   max_recent_finishes: 10

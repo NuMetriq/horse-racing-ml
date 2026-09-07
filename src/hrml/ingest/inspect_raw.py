@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 import sqlite3
+import argparse
 import pandas as pd
-
-RAW_DIR = Path("data/raw")
 
 
 def qident(name: str) -> str:
@@ -24,20 +23,17 @@ def inspect_sqlite(db_path: Path) -> None:
     for t in tables:
         qt = qident(t)
 
-        # columns
         cols = cur.execute(f"PRAGMA table_info({qt})").fetchall()
         colnames = [c[1] for c in cols]
         print(f"\n-- {t} ({len(colnames)} cols) --")
         print(colnames)
 
-        # row count
         try:
             n = cur.execute(f"SELECT COUNT(*) FROM {qt}").fetchone()[0]
             print("Row count:", n)
         except Exception as e:
             print("Could not count rows:", e)
 
-        # sample rows
         try:
             df = pd.read_sql_query(f"SELECT * FROM {qt} LIMIT 5", con)
             print(df.head())
@@ -48,9 +44,19 @@ def inspect_sqlite(db_path: Path) -> None:
 
 
 def main() -> None:
-    dbs = list(RAW_DIR.glob("*.db")) + list(RAW_DIR.glob("*.sqlite")) + list(RAW_DIR.glob("*.sqlite3"))
+    parser = argparse.ArgumentParser(description="Inspect raw SQLite files")
+    parser.add_argument(
+        "--raw-dir",
+        type=Path,
+        default=Path("data/raw"),
+        help="Directory containing raw SQLite files (default: data/raw)",
+    )
+    args = parser.parse_args()
+
+    raw_dir = args.raw_dir
+    dbs = list(raw_dir.glob("*.db")) + list(raw_dir.glob("*.sqlite")) + list(raw_dir.glob("*.sqlite3"))
     if not dbs:
-        raise FileNotFoundError(f"No .db/.sqlite found in {RAW_DIR.resolve()}")
+        raise FileNotFoundError(f"No .db/.sqlite found in {raw_dir.resolve()}")
 
     for db in dbs:
         inspect_sqlite(db)

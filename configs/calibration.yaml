@@ -1,0 +1,8 @@
+data:
+  races_path: data/processed/races.parquet
+  runners_path: data/processed/runners.parquet
+
+split:
+  date_col: race_date
+  train_end: "2021-12-31"
+  valid_end: "2022-12-31"

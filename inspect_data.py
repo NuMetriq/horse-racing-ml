@@ -1,5 +1,6 @@
 from pathlib import Path
 import sqlite3
+import argparse
 
 def open_database(path: Path) -> sqlite3.Connection:
     if not path.is_file():
@@ -31,17 +32,66 @@ def check_race_names(connection: sqlite3.Connection) -> None:
     else:
         print("No conflicting race names within candidate race groups.")
 
+def summarize_data(connection: sqlite3.Connection) -> None:
+    row = connection.execute(
+        """
+        SELECT COUNT(*), MIN(date), MAX(date)
+        FROM data
+        WHERE NOT (
+            date = 'date'
+            AND race_id = 'race_id'
+            AND horse = 'horse'
+        )
+        """
+    ).fetchone()
+
+    count, earliest, latest = row
+
+    print(f"Runner rows: {count:,}")
+    print(f"Date range: {earliest} through {latest}")
+
+def summarize_winners(connection: sqlite3.Connection) -> None:
+    rows = connection.execute(
+        """
+        WITH race_summary AS (
+            SELECT
+                date, course, off,
+                SUM(CASE WHEN pos = 1 THEN 1 ELSE 0 END) AS winners
+            FROM data
+            WHERE NOT (
+                date = 'date'
+                AND race_id = 'race_id'
+                AND horse = 'horse'
+            )
+            GROUP BY date, course, off
+        )
+        SELECT winners, COUNT(*)
+        FROM race_summary
+        GROUP BY winners
+        ORDER BY winners
+        """
+    ).fetchall()
+
+    for winners, count in rows:
+        print(f"{winners} recorded winner(s): {count:,} race groups")
+
 def main() -> None:
-    database_path = (
-        Path.home()
-        / ".cache/kagglehub/datasets/deltaromeo"
-        / "horse-racing-results-ukireland-2015-2025"
-        / "versions/118/form_2015-present/form_2015-present/raceform.db"
+    parser = argparse.ArgumentParser(
+        description="Inspect a horse-racing SQLite database."
     )
+    parser.add_argument(
+        "database",
+        type=Path,
+        help="Path to the SQLite database file",
+    )
+    args = parser.parse_args()
+    database_path = args.database.resolve()
 
     connection = open_database(database_path)
 
     try:
+        summarize_data(connection)
+        summarize_winners(connection)
         check_race_names(connection)
     finally:
         connection.close()

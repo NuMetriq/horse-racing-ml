@@ -18,7 +18,9 @@ def export_races(
            AND COUNT(*) = MIN(ran)
            AND MIN(ran) = MAX(ran)
            AND COUNT(ran) = COUNT(*)
+           AND COUNT(*) >= 2
         """
+
     )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)

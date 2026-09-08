@@ -32,3 +32,43 @@ Version 118 results:
 These are initial eligibility checks, not complete data validation.
 Races with multiple recorded winners are outside this first model's scope.
 Raw source data remains unchanged.
+
+## Chronological evaluation splits
+
+Assign each race to a split using its race date. All runners in the
+same race belong to the same split.
+
+| Split | Date rule | Races in version 118 | Purpose |
+|---|---|---:|---|
+| Training | date < 2024-01-01 | 98,625 | Fit models and preprocessing |
+| Validation | 2024-01-01 <= date < 2025-01-01 | 11,637 | Select features, hyperparameters, and model |
+| Test | date >= 2025-01-01 | 15,872 | Evaluate the finalized approach |
+
+The prepared version 118 dataset spans 2015-01-01 through 2026-05-27.
+The test period therefore contains all available 2025 races and a
+partial 2026. Counts refer to eligible flat race groups.
+
+### Evaluation rules
+
+- Do not randomly shuffle races across splits.
+- Fit learned preprocessing on training data only.
+- Construct historical features using information available before
+  each race; chronological splits alone do not prevent feature leakage.
+- Use validation performance to guide development.
+- Reserve test performance for final evaluation, without using it
+  to select features or tune the model.
+- Compare models and baselines on identical evaluation races, using
+  mean race-level log loss with equal weight per race.
+
+The uniform baseline log loss of 2.243584 was calculated over the
+entire prepared dataset. It is descriptive, not a validation or test
+benchmark; split-specific baselines will be calculated separately.
+
+### Validation baseline
+
+| Baseline | Period | Races | Mean race-level log loss |
+|---|---|---:|---:|
+| Uniform probability (1 / field size) | 2024 | 11,637 | 2.253199 |
+
+Lower loss is better. This baseline assigns equal probability to every
+runner within a race and requires no training.

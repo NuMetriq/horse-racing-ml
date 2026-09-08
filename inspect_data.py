@@ -162,6 +162,7 @@ def summarize_eligible_races(
                AND COUNT(*) = MIN(ran)
                AND MIN(ran) = MAX(ran)
                AND COUNT(ran) = COUNT(*)
+               AND COUNT(*) >= 2
         )
         SELECT COUNT(*), SUM(runners)
         FROM eligible

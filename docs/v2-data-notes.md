@@ -72,3 +72,19 @@ benchmark; split-specific baselines will be calculated separately.
 
 Lower loss is better. This baseline assigns equal probability to every
 runner within a race and requires no training.
+
+### First historical-form model
+
+- Feature history: earlier dates only, using the prepared race subset.
+- Horse identity: exact horse-name string.
+- Score: (prior_wins + alpha * reference_rate) / (prior_starts + alpha).
+- Reference rate: training-period wins divided by training-period starts
+  (approximately 0.099715; full precision used in code).
+- Initial smoothing strength: alpha = 10.
+- Race probabilities: each runner's score divided by the race's total score.
+- Validation histories update with results from earlier validation dates.
+- Validation: 11,637 races in 2024.
+- Model race log loss: 2.247187.
+- Uniform race log loss: 2.253199.
+- Improvement: 0.006012; lower loss is better.
+- Test performance remains unevaluated.

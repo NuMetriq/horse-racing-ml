@@ -1,8 +1,40 @@
 import argparse
 import math
+from prior_form import calculate_prior_form
 from pathlib import Path
 
 from inspect_data import open_database
+
+
+def calculate_prior_form(history):
+    prior_starts = 0
+    prior_wins = 0
+    features = []
+
+    for date, records in groupby(history, key=lambda row: row[0]):
+        day_records = list(records)
+
+        prior_rate = (
+            prior_wins / prior_starts
+            if prior_starts > 0
+            else None
+        )
+
+        for _, course, off, position in day_records:
+            features.append(
+                (
+                    date, course, off, position,
+                    prior_starts, prior_wins, prior_rate,
+                )
+            )
+
+        prior_starts += len(day_records)
+        prior_wins += sum(
+            position == "1"
+            for _, _, _, position in day_records
+        )
+
+    return features
 
 
 def main() -> None:
@@ -144,6 +176,44 @@ def main() -> None:
         print(
             f"Validation uniform race log loss: {validation_loss:.6f}"
         )
+
+        horse, starts = connection.execute(
+            """
+            SELECT horse, COUNT(*) AS starts
+            FROM runners
+            WHERE date < '2024-01-01'
+            GROUP BY horse
+            HAVING COUNT(*) BETWEEN 5 AND 20
+                AND SUM(
+                    CASE WHEN finish_position = '1' THEN 1 ELSE 0 END
+                ) >= 1
+            ORDER BY horse
+            LIMIT 1
+            """
+        ).fetchone()
+
+        print(f"Example horse: {horse} | Training starts: {starts}")
+
+        history = connection.execute(
+            """
+            SELECT date, course, off, finish_position
+            FROM runners
+            WHERE horse = ?
+              AND date < '2024-01-01'
+            ORDER BY date, course, off
+            """,
+            (horse,),
+        ).fetchall()
+
+        features = calculate_prior_form(history)
+
+        for date, course, off, position, starts, wins, rate in features:
+            print(
+                f"{date} | Position: {position} | "
+                f"Prior starts: {starts} | "
+                f"Prior wins: {wins} | "
+                f"Prior win rate: {rate}"
+            )
     finally:
         connection.close()
 

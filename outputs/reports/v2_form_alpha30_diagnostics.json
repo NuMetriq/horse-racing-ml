@@ -1,0 +1,32 @@
+{
+  "model": "smoothed_horse_win_rate",
+  "database": "C:\\Users\\Owner\\Documents\\NuMetriq\\horse-racing-ml\\data\\processed\\v2_flat_competitive.db",
+  "alpha": 30.0,
+  "training_reference_rate": 0.09971458122909027,
+  "validation_start": "2024-01-01",
+  "validation_end_exclusive": "2025-01-01",
+  "validation_races": 11637,
+  "model_log_loss": 2.240013348401101,
+  "uniform_log_loss": 2.2531991737595463,
+  "improvement": 0.013185825358445147,
+  "by_field_size": {
+    "2\u20137 runners": {
+      "races": 2762,
+      "model_log_loss": 1.75595249307656,
+      "uniform_log_loss": 1.7723913524164687,
+      "improvement": 0.01643885933990874
+    },
+    "8\u201312 runners": {
+      "races": 6310,
+      "model_log_loss": 2.2722599854940846,
+      "uniform_log_loss": 2.285539303446196,
+      "improvement": 0.013279317952111569
+    },
+    "13+ runners": {
+      "races": 2565,
+      "model_log_loss": 2.681923602728474,
+      "uniform_log_loss": 2.6913765555243234,
+      "improvement": 0.009452952795849345
+    }
+  }
+}

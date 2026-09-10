@@ -113,6 +113,45 @@ def main() -> None:
         print(f"Validation uniform log loss: {uniform_loss:.6f}")
         print(f"Improvement over uniform: {uniform_loss - model_loss:.6f}")
 
+        field_groups = {
+            "2–7 runners": {},
+            "8–12 runners": {},
+            "13+ runners": {},
+        }
+
+        for race_key, runners in validation_scores.items():
+            size = len(runners)
+
+            if size <= 7:
+                group = "2–7 runners"
+            elif size <= 12:
+                group = "8–12 runners"
+            else:
+                group = "13+ runners"
+
+            field_groups[group][race_key] = runners
+
+        field_size_results = {}
+
+        for group, races in field_groups.items():
+            if not races:
+                continue
+
+            model, uniform = evaluate_race_scores(races)
+
+            field_size_results[group] = {
+                "races": len(races),
+                "model_log_loss": model,
+                "uniform_log_loss": uniform,
+                "improvement": uniform - model,
+            }
+
+            print(
+                f"{group}: {len(races):,} races | "
+                f"Model: {model:.6f} | Uniform: {uniform:.6f} | "
+                f"Improvement: {uniform - model:.6f}"
+            )
+
         if args.report is not None:
             report = {
                 "model": "smoothed_horse_win_rate",
@@ -125,6 +164,7 @@ def main() -> None:
                 "model_log_loss": model_loss,
                 "uniform_log_loss": uniform_loss,
                 "improvement": uniform_loss - model_loss,
+                "by_field_size": field_size_results,
             }
 
             args.report.parent.mkdir(parents=True, exist_ok=True)

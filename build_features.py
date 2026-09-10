@@ -12,7 +12,17 @@ def main() -> None:
         description="Build historical horse features."
     )
     parser.add_argument("database", type=Path)
+    parser.add_argument(
+        "--alpha",
+        type=float,
+        default=10.0,
+        help="Positive smoothing strength (default: 10)",
+    )
     args = parser.parse_args()
+    if not math.isfinite(args.alpha) or args.alpha <= 0:
+        parser.error("--alpha must be a finite number greater than zero")
+
+    print(f"Smoothing strength: {args.alpha}")
 
     connection = open_database(args.database.resolve())
 
@@ -32,7 +42,9 @@ def main() -> None:
         reference_rate = training_wins / training_starts
 
         print(f"Training reference win rate: {reference_rate:.6f}")
-        example_score = smoothed_win_rate(1, 4, reference_rate)
+        example_score = smoothed_win_rate(
+            1, 4, reference_rate, alpha=args.alpha
+        )
         print(f"Example smoothed score: {example_score:.6f}")
 
         rows = connection.execute(
@@ -65,7 +77,7 @@ def main() -> None:
                 if split == "validation":
                     race_key = (date, course, off)
                     score = smoothed_win_rate(
-                        wins, starts, reference_rate
+                        wins, starts, reference_rate, alpha=args.alpha
                     )
 
                     validation_scores.setdefault(race_key, []).append(

@@ -88,3 +88,11 @@ runner within a race and requires no training.
 - Uniform race log loss: 2.253199.
 - Improvement: 0.006012; lower loss is better.
 - Test performance remains unevaluated.
+
+Selected alpha = 30 from the fixed candidate set {1, 3, 10, 30, 100}
+using the lowest 2024 validation race log loss.
+
+Selected validation loss: 2.240013.
+Improvement over uniform: 0.013186 (approximately 0.59%).
+This is the best tested setting, not a proven global optimum.
+Test performance remains unevaluated.

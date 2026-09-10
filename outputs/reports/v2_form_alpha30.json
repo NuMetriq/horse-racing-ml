@@ -1,0 +1,12 @@
+{
+  "model": "smoothed_horse_win_rate",
+  "database": "C:\\Users\\Owner\\Documents\\NuMetriq\\horse-racing-ml\\data\\processed\\v2_flat_competitive.db",
+  "alpha": 30.0,
+  "training_reference_rate": 0.09971458122909027,
+  "validation_start": "2024-01-01",
+  "validation_end_exclusive": "2025-01-01",
+  "validation_races": 11637,
+  "model_log_loss": 2.240013348401101,
+  "uniform_log_loss": 2.2531991737595463,
+  "improvement": 0.013185825358445147
+}

@@ -1,10 +1,12 @@
 import argparse
+import json
 import math
 from itertools import groupby
 from pathlib import Path
 
 from inspect_data import open_database
 from prior_form import calculate_prior_form, smoothed_win_rate
+from race_metrics import evaluate_race_scores
 
 
 def main() -> None:
@@ -17,6 +19,11 @@ def main() -> None:
         type=float,
         default=10.0,
         help="Positive smoothing strength (default: 10)",
+    )
+    parser.add_argument(
+        "--report",
+        type=Path,
+        help="Save run settings and metrics to a new JSON file",
     )
     args = parser.parse_args()
     if not math.isfinite(args.alpha) or args.alpha <= 0:
@@ -98,32 +105,35 @@ def main() -> None:
             )
         print(f"Validation races scored: {len(validation_scores):,}")
 
-        model_losses = []
-        uniform_losses = []
-
-        for race_key, runners in validation_scores.items():
-            total_score = sum(score for _, _, score in runners)
-
-            winner_scores = [
-                score
-                for _, position, score in runners
-                if position == "1"
-            ]
-
-            if len(winner_scores) != 1:
-                raise ValueError(f"Expected one winner: {race_key}")
-
-            winner_probability = winner_scores[0] / total_score
-
-            model_losses.append(-math.log(winner_probability))
-            uniform_losses.append(math.log(len(runners)))
-
-        model_loss = sum(model_losses) / len(model_losses)
-        uniform_loss = sum(uniform_losses) / len(uniform_losses)
+        model_loss, uniform_loss = evaluate_race_scores(
+            validation_scores
+        )
 
         print(f"Validation smoothed-form log loss: {model_loss:.6f}")
         print(f"Validation uniform log loss: {uniform_loss:.6f}")
         print(f"Improvement over uniform: {uniform_loss - model_loss:.6f}")
+
+        if args.report is not None:
+            report = {
+                "model": "smoothed_horse_win_rate",
+                "database": str(args.database.resolve()),
+                "alpha": args.alpha,
+                "training_reference_rate": reference_rate,
+                "validation_start": "2024-01-01",
+                "validation_end_exclusive": "2025-01-01",
+                "validation_races": len(validation_scores),
+                "model_log_loss": model_loss,
+                "uniform_log_loss": uniform_loss,
+                "improvement": uniform_loss - model_loss,
+            }
+
+            args.report.parent.mkdir(parents=True, exist_ok=True)
+
+            with args.report.open("x", encoding="utf-8") as file:
+                json.dump(report, file, indent=2)
+                file.write("\n")
+
+            print(f"Report saved to: {args.report}")
 
     finally:
         connection.close()

@@ -1,6 +1,7 @@
 import argparse
 import json
 import math
+import sqlite3
 from itertools import groupby
 from pathlib import Path
 
@@ -12,6 +13,52 @@ from prior_form import (
 )
 from race_metrics import evaluate_race_scores
 
+
+def save_feature_table(feature_rows, output_path: Path) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    destination = sqlite3.connect(output_path)
+
+    try:
+        with destination:
+            destination.execute(
+                """
+                CREATE TABLE features (
+                    date TEXT NOT NULL,
+                    course TEXT NOT NULL,
+                    off TEXT NOT NULL,
+                    horse TEXT NOT NULL,
+                    prior_starts INTEGER NOT NULL,
+                    prior_wins INTEGER NOT NULL,
+                    prior_win_rate REAL,
+                    won INTEGER NOT NULL CHECK (won IN (0, 1)),
+                    split TEXT NOT NULL
+                        CHECK (split IN ('train', 'validation')),
+                    PRIMARY KEY (date, course, off, horse)
+                )
+                """
+            )
+
+            destination.executemany(
+                """
+                INSERT INTO features VALUES (
+                    :date, :course, :off, :horse,
+                    :prior_starts, :prior_wins, :prior_win_rate,
+                    :won, :split
+                )
+                """,
+                feature_rows,
+            )
+
+            count = destination.execute(
+                "SELECT COUNT(*) FROM features"
+            ).fetchone()[0]
+
+            if count != len(feature_rows):
+                raise ValueError("Exported feature count does not match")
+
+        print(f"Saved {count:,} feature rows to: {output_path}")
+    finally:
+        destination.close()
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -35,7 +82,19 @@ def main() -> None:
         default=None,
         help="Use this many prior days of history; omit for all history",
     )
+    parser.add_argument(
+        "--features-output",
+        type=Path,
+        help="Save the feature table to a new SQLite database",
+    )
     args = parser.parse_args()
+    if args.features_output is not None:
+        args.features_output = args.features_output.resolve()
+
+        if args.features_output.exists():
+            parser.error(
+                f"Feature output already exists: {args.features_output}"
+            )
     if not math.isfinite(args.alpha) or args.alpha <= 0:
         parser.error("--alpha must be a finite number greater than zero")
     if args.window_days is not None and args.window_days <= 0:
@@ -83,6 +142,7 @@ def main() -> None:
 
         validation_scores = {}
         validation_history_counts = {}
+        feature_rows = []
 
         for horse, records in groupby(rows, key=lambda row: row[0]):
             history = [row[1:] for row in records]
@@ -94,6 +154,21 @@ def main() -> None:
                 )
             for date, course, off, position, starts, wins, rate in features:
                 split = "train" if date < "2024-01-01" else "validation"
+
+                feature_rows.append(
+                    {
+                        "date": date,
+                        "course": course,
+                        "off": off,
+                        "horse": horse,
+                        "prior_starts": starts,
+                        "prior_wins": wins,
+                        "prior_win_rate": rate,
+                        "won": int(position == "1"),
+                        "split": split,
+                    }
+                )
+
                 split_totals[split] += 1
 
                 if starts == 0:
@@ -124,6 +199,12 @@ def main() -> None:
 
             horse_count += 1
             feature_count += len(features)
+
+        print(f"Feature-table rows assembled: {len(feature_rows):,}")
+        print("Example feature row:", feature_rows[0])
+
+        if args.features_output is not None:
+            save_feature_table(feature_rows, args.features_output)
 
         majority_missing = sum(
             missing > total / 2

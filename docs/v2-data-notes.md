@@ -133,3 +133,24 @@ statistical significance.
 No recorded history does not imply a career debut. For three
 inspected horses, the raw source also contained no earlier records
 under their exact names.
+
+### Logistic regression baseline
+
+- Inputs: prior starts, prior wins, and prior win rate.
+- Missing rates: filled with zero, with a missing-value indicator added.
+- Preprocessing: imputer and standard scaler fitted on training only.
+- Model: scikit-learn 1.9.1 LogisticRegression,
+  solver="lbfgs", C=1.0, max_iter=1000.
+- Training objective: regularized runner-level binary log loss.
+- Evaluation: predicted win probabilities normalized within each race;
+  mean race-level log loss, with equal weight per race.
+- Validation period: 2024.
+
+| Model | Validation race log loss |
+|---|---:|
+| Uniform | 2.253199 |
+| Smoothed all-history, alpha = 30 | 2.240013 |
+| Logistic regression | 2.225778 |
+
+Logistic regression is the best validation model evaluated so far.
+Test performance remains unevaluated.

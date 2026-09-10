@@ -1,0 +1,163 @@
+import argparse
+import numpy as np
+from pathlib import Path
+
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+
+from inspect_data import open_database
+from race_metrics import evaluate_race_scores
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Train a logistic regression racing model."
+    )
+    parser.add_argument("database", type=Path)
+    args = parser.parse_args()
+
+    connection = open_database(args.database.resolve())
+
+    try:
+        counts = connection.execute(
+            """
+            SELECT split, COUNT(*), SUM(won)
+            FROM features
+            GROUP BY split
+            ORDER BY split
+            """
+        ).fetchall()
+
+        for split, runners, winners in counts:
+            print(
+                f"{split}: {runners:,} runners | "
+                f"{winners:,} recorded winners"
+            )
+
+        training_rows = connection.execute(
+            """
+            SELECT prior_starts, prior_wins, prior_win_rate, won
+            FROM features
+            WHERE split = 'train'
+            ORDER BY date, course, off, horse
+            """
+        ).fetchall()
+
+        training_array = np.array(training_rows, dtype=float)
+
+        X_train = training_array[:, :3]
+        y_train = training_array[:, 3].astype(int)
+
+        print(f"X_train shape: {X_train.shape}")
+        print(f"y_train shape: {y_train.shape}")
+        print(f"Missing input values: {np.isnan(X_train).sum():,}")
+
+        imputer = SimpleImputer(
+            strategy="constant",
+            fill_value=0.0,
+            add_indicator=True,
+        )
+
+        X_train_imputed = imputer.fit_transform(X_train)
+
+        print(f"After imputation: {X_train_imputed.shape}")
+        print(f"Remaining missing values: {np.isnan(X_train_imputed).sum()}")
+        print(
+            f"Rows flagged as missing history: "
+            f"{int(X_train_imputed[:, -1].sum()):,}"
+        )
+
+        scaler = StandardScaler()
+        X_train_scaled = scaler.fit_transform(X_train_imputed)
+
+        print(
+            "Scaled column means:",
+            np.round(X_train_scaled.mean(axis=0), 6),
+        )
+        print(
+            "Scaled column standard deviations:",
+            np.round(X_train_scaled.std(axis=0), 6),
+        )
+
+        model = LogisticRegression(
+            solver="lbfgs",
+            C=1.0,
+            max_iter=1000,
+        )
+
+        print("Fitting logistic regression...", flush=True)
+        model.fit(X_train_scaled, y_train)
+
+        feature_names = [
+            "prior_starts",
+            "prior_wins",
+            "prior_win_rate",
+            "missing_history",
+        ]
+
+        print(f"Iterations used: {model.n_iter_[0]}")
+        print(f"Intercept: {model.intercept_[0]:.6f}")
+
+        for name, weight in zip(feature_names, model.coef_[0]):
+            print(f"{name}: {weight:.6f}")
+
+        validation_rows = connection.execute(
+            """
+            SELECT
+                date, course, off, horse,
+                prior_starts, prior_wins, prior_win_rate, won
+            FROM features
+            WHERE split = 'validation'
+            ORDER BY date, course, off, horse
+            """
+        ).fetchall()
+
+        X_validation = np.array(
+            [row[4:7] for row in validation_rows],
+            dtype=float,
+        )
+        y_validation = np.array(
+            [row[7] for row in validation_rows],
+            dtype=int,
+        )
+
+        X_validation_imputed = imputer.transform(X_validation)
+        X_validation_scaled = scaler.transform(X_validation_imputed)
+
+        print(f"Validation inputs: {X_validation_scaled.shape}")
+        print(f"Validation winners: {y_validation.sum():,}")
+
+        win_column = list(model.classes_).index(1)
+        probabilities = model.predict_proba(
+            X_validation_scaled
+        )[:, win_column]
+
+        validation_scores = {}
+
+        for row, probability in zip(validation_rows, probabilities):
+            date, course, off, horse = row[:4]
+            won = row[7]
+            race_key = (date, course, off)
+
+            winner_marker = "1" if won == 1 else "0"
+
+            validation_scores.setdefault(race_key, []).append(
+                (horse, winner_marker, float(probability))
+            )
+
+        model_loss, uniform_loss = evaluate_race_scores(
+            validation_scores
+        )
+
+        print(f"Validation races evaluated: {len(validation_scores):,}")
+        print(f"Logistic race log loss: {model_loss:.6f}")
+        print(f"Uniform race log loss: {uniform_loss:.6f}")
+        print(f"Improvement over uniform: {uniform_loss - model_loss:.6f}")
+
+    finally:
+        connection.close()
+
+
+if __name__ == "__main__":
+    main()

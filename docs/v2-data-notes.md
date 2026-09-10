@@ -113,3 +113,23 @@ excludes same-day results. Its loss was 0.001614 higher.
 Retain all-history with alpha = 30 as the selected baseline.
 This comparison does not establish the best smoothing strength
 for the 365-day model. Test performance remains unevaluated.
+
+### History-coverage limitation
+
+In 2024 validation, 685 of 11,637 races (5.9%) had a majority of
+runners with no earlier history in the prepared subset.
+
+| Group | Races | Model log loss | Uniform log loss | Improvement |
+|---|---:|---:|---:|---:|
+| Majority without history | 685 | 2.219470 | 2.222409 | 0.002939 |
+| Other races | 10,952 | 2.241298 | 2.255125 | 0.013827 |
+
+Settings: all-history, alpha = 30.
+
+The model's observed advantage was smaller in the sparse-history
+group. These descriptive results do not establish causality or
+statistical significance.
+
+No recorded history does not imply a career debut. For three
+inspected horses, the raw source also contained no earlier records
+under their exact names.

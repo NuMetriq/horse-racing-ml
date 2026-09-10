@@ -172,6 +172,31 @@ def summarize_eligible_races(
     races, runners = row
     return races, runners or 0
 
+def inspect_example_history(connection: sqlite3.Connection) -> None:
+    horses = (
+        "Bandalera Miss (AUS)",
+        "Fine Touch (AUS)",
+        "Yonga Lass (AUS)",
+    )
+
+    for horse in horses:
+        total, flat = connection.execute(
+            """
+            SELECT
+                COUNT(*),
+                SUM(CASE WHEN type = 'Flat' THEN 1 ELSE 0 END)
+            FROM data
+            WHERE horse = ?
+              AND date < ?
+            """,
+            (horse, "2024-01-01"),
+        ).fetchone()
+
+        print(
+            f"{horse} | Earlier raw rows: {total} | "
+            f"Earlier flat rows: {flat or 0}"
+        )
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Inspect a horse-racing SQLite database."
@@ -197,6 +222,7 @@ def main() -> None:
         races, runners = summarize_eligible_races(connection)
         print(f"Eligible race groups: {races:,}")
         print(f"Eligible runner rows: {runners:,}")
+        inspect_example_history(connection)
     finally:
         connection.close()
 

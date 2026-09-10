@@ -82,6 +82,7 @@ def main() -> None:
         missing_history = {"train": 0, "validation": 0}
 
         validation_scores = {}
+        validation_history_counts = {}
 
         for horse, records in groupby(rows, key=lambda row: row[0]):
             history = [row[1:] for row in records]
@@ -100,16 +101,66 @@ def main() -> None:
 
                 if split == "validation":
                     race_key = (date, course, off)
+                    counts = validation_history_counts.setdefault(
+                        race_key, [0, 0]
+                    )
+                    counts[0] += 1
+                    counts[1] += int(starts == 0)
                     score = smoothed_win_rate(
                         wins, starts, reference_rate, alpha=args.alpha
                     )
 
+                    if race_key == ("2024-01-01", "Ascot (AUS)", "7:50"):
+                        print(
+                            f"{horse} | Prior starts: {starts} | "
+                            f"Prior wins: {wins} | "
+                            f"Smoothed score: {score:.8f}"
+                        )
+
                     validation_scores.setdefault(race_key, []).append(
                         (horse, position, score)
                     )
+                    
 
             horse_count += 1
             feature_count += len(features)
+
+        majority_missing = sum(
+            missing > total / 2
+            for total, missing in validation_history_counts.values()
+        )
+
+        print(
+            f"Validation races with a majority lacking history: "
+            f"{majority_missing:,} of {len(validation_history_counts):,}"
+        )
+
+        coverage_groups = {
+            "Majority without history": {},
+            "Other races": {},
+        }
+
+        for race_key, runners in validation_scores.items():
+            total, missing = validation_history_counts[race_key]
+
+            if missing > total / 2:
+                group = "Majority without history"
+            else:
+                group = "Other races"
+
+            coverage_groups[group][race_key] = runners
+
+        for group, races in coverage_groups.items():
+            if not races:
+                continue
+
+            model, uniform = evaluate_race_scores(races)
+
+            print(
+                f"{group}: {len(races):,} races | "
+                f"Model: {model:.6f} | Uniform: {uniform:.6f} | "
+                f"Improvement: {uniform - model:.6f}"
+            )
 
         print(f"Horse names processed: {horse_count:,}")
         print(f"Feature rows calculated: {feature_count:,}")
@@ -121,6 +172,24 @@ def main() -> None:
                 f"have no prior history ({missing / total:.1%})"
             )
         print(f"Validation races scored: {len(validation_scores):,}")
+
+        example_key = min(validation_scores)
+        example_runners = validation_scores[example_key]
+        total_score = sum(score for _, _, score in example_runners)
+
+        print(f"\nExample validation race: {example_key}")
+
+        for horse, position, score in sorted(
+            example_runners,
+            key=lambda runner: runner[2],
+            reverse=True,
+        ):
+            probability = score / total_score
+
+            print(
+                f"{horse} | Probability: {probability:.2%} | "
+                f"Actual position: {position}"
+            )
 
         model_loss, uniform_loss = evaluate_race_scores(
             validation_scores

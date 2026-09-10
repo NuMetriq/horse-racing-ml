@@ -5,7 +5,11 @@ from itertools import groupby
 from pathlib import Path
 
 from inspect_data import open_database
-from prior_form import calculate_prior_form, smoothed_win_rate
+from prior_form import (
+    calculate_prior_form,
+    calculate_recent_form,
+    smoothed_win_rate,
+)
 from race_metrics import evaluate_race_scores
 
 
@@ -25,9 +29,17 @@ def main() -> None:
         type=Path,
         help="Save run settings and metrics to a new JSON file",
     )
+    parser.add_argument(
+        "--window-days",
+        type=int,
+        default=None,
+        help="Use this many prior days of history; omit for all history",
+    )
     args = parser.parse_args()
     if not math.isfinite(args.alpha) or args.alpha <= 0:
         parser.error("--alpha must be a finite number greater than zero")
+    if args.window_days is not None and args.window_days <= 0:
+        parser.error("--window-days must be greater than zero")
 
     print(f"Smoothing strength: {args.alpha}")
 
@@ -73,7 +85,12 @@ def main() -> None:
 
         for horse, records in groupby(rows, key=lambda row: row[0]):
             history = [row[1:] for row in records]
-            features = calculate_prior_form(history)
+            if args.window_days is None:
+                features = calculate_prior_form(history)
+            else:
+                features = calculate_recent_form(
+                    history, window_days=args.window_days
+                )
             for date, course, off, position, starts, wins, rate in features:
                 split = "train" if date < "2024-01-01" else "validation"
                 split_totals[split] += 1
@@ -157,6 +174,7 @@ def main() -> None:
                 "model": "smoothed_horse_win_rate",
                 "database": str(args.database.resolve()),
                 "alpha": args.alpha,
+                "window_days": args.window_days,
                 "training_reference_rate": reference_rate,
                 "validation_start": "2024-01-01",
                 "validation_end_exclusive": "2025-01-01",

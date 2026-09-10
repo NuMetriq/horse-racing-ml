@@ -96,3 +96,20 @@ Selected validation loss: 2.240013.
 Improvement over uniform: 0.013186 (approximately 0.59%).
 This is the best tested setting, not a proven global optimum.
 Test performance remains unevaluated.
+
+### Recent-history experiment
+
+Compared all recorded history with the preceding 365 days, holding
+alpha = 30 and the validation races fixed.
+
+| History | Validation race log loss |
+|---|---:|
+| All recorded history | 2.240013 |
+| Previous 365 days | 2.241627 |
+
+The 365-day window includes results exactly 365 days earlier and
+excludes same-day results. Its loss was 0.001614 higher.
+
+Retain all-history with alpha = 30 as the selected baseline.
+This comparison does not establish the best smoothing strength
+for the 365-day model. Test performance remains unevaluated.

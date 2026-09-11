@@ -1,5 +1,7 @@
 import argparse
 import numpy as np
+
+import json
 from pathlib import Path
 
 from sklearn.impute import SimpleImputer
@@ -15,6 +17,11 @@ def main() -> None:
         description="Train a logistic regression racing model."
     )
     parser.add_argument("database", type=Path)
+    parser.add_argument(
+        "--report",
+        type=Path,
+        help="Save settings and metrics to a new JSON file",
+    )
     args = parser.parse_args()
 
     connection = open_database(args.database.resolve())
@@ -154,6 +161,36 @@ def main() -> None:
         print(f"Logistic race log loss: {model_loss:.6f}")
         print(f"Uniform race log loss: {uniform_loss:.6f}")
         print(f"Improvement over uniform: {uniform_loss - model_loss:.6f}")
+
+        if args.report is not None:
+            report = {
+                "model": "logistic_regression",
+                "database": str(args.database.resolve()),
+                "features": feature_names,
+                "imputation": "constant zero with missing indicator",
+                "scaling": "standard scaler fitted on training",
+                "solver": model.solver,
+                "C": model.C,
+                "max_iter": model.max_iter,
+                "iterations_used": int(model.n_iter_[0]),
+                "intercept": float(model.intercept_[0]),
+                "coefficients": model.coef_[0].tolist(),
+                "validation_start": "2024-01-01",
+                "validation_end_exclusive": "2025-01-01",
+                "validation_races": len(validation_scores),
+                "probability_normalization": "divide by race total",
+                "model_log_loss": model_loss,
+                "uniform_log_loss": uniform_loss,
+                "improvement": uniform_loss - model_loss,
+            }
+
+            args.report.parent.mkdir(parents=True, exist_ok=True)
+
+            with args.report.open("x", encoding="utf-8") as file:
+                json.dump(report, file, indent=2)
+                file.write("\n")
+
+            print(f"Report saved to: {args.report}")
 
     finally:
         connection.close()

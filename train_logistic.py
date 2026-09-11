@@ -7,6 +7,7 @@ from pathlib import Path
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
 
 from inspect_data import open_database
 from race_metrics import evaluate_race_scores
@@ -60,41 +61,34 @@ def main() -> None:
         print(f"y_train shape: {y_train.shape}")
         print(f"Missing input values: {np.isnan(X_train).sum():,}")
 
-        imputer = SimpleImputer(
-            strategy="constant",
-            fill_value=0.0,
-            add_indicator=True,
+        pipeline = Pipeline(
+            [
+                (
+                    "imputer",
+                    SimpleImputer(
+                        strategy="constant",
+                        fill_value=0.0,
+                        add_indicator=True,
+                    ),
+                ),
+                ("scaler", StandardScaler()),
+                (
+                    "classifier",
+                    LogisticRegression(
+                        solver="lbfgs",
+                        C=1.0,
+                        max_iter=1000,
+                    ),
+                ),
+            ]
         )
 
-        X_train_imputed = imputer.fit_transform(X_train)
+        print("Fitting logistic regression pipeline...", flush=True)
+        pipeline.fit(X_train, y_train)
 
-        print(f"After imputation: {X_train_imputed.shape}")
-        print(f"Remaining missing values: {np.isnan(X_train_imputed).sum()}")
-        print(
-            f"Rows flagged as missing history: "
-            f"{int(X_train_imputed[:, -1].sum()):,}"
-        )
-
-        scaler = StandardScaler()
-        X_train_scaled = scaler.fit_transform(X_train_imputed)
-
-        print(
-            "Scaled column means:",
-            np.round(X_train_scaled.mean(axis=0), 6),
-        )
-        print(
-            "Scaled column standard deviations:",
-            np.round(X_train_scaled.std(axis=0), 6),
-        )
-
-        model = LogisticRegression(
-            solver="lbfgs",
-            C=1.0,
-            max_iter=1000,
-        )
-
-        print("Fitting logistic regression...", flush=True)
-        model.fit(X_train_scaled, y_train)
+        imputer = pipeline.named_steps["imputer"]
+        scaler = pipeline.named_steps["scaler"]
+        model = pipeline.named_steps["classifier"]
 
         feature_names = [
             "prior_starts",
@@ -129,15 +123,12 @@ def main() -> None:
             dtype=int,
         )
 
-        X_validation_imputed = imputer.transform(X_validation)
-        X_validation_scaled = scaler.transform(X_validation_imputed)
-
-        print(f"Validation inputs: {X_validation_scaled.shape}")
+        print(f"Validation inputs before preprocessing: {X_validation.shape}")
         print(f"Validation winners: {y_validation.sum():,}")
 
-        win_column = list(model.classes_).index(1)
-        probabilities = model.predict_proba(
-            X_validation_scaled
+        win_column = list(pipeline.classes_).index(1)
+        probabilities = pipeline.predict_proba(
+            X_validation
         )[:, win_column]
 
         validation_scores = {}

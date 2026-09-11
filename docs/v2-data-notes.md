@@ -154,3 +154,24 @@ under their exact names.
 
 Logistic regression is the best validation model evaluated so far.
 Test performance remains unevaluated.
+
+### Days-since-run experiment
+
+Added raw days since the previous recorded race on an earlier date.
+Same-day starts are excluded. Missing gaps receive zero imputation
+and a missing-value indicator.
+
+Training gaps ranged from 1 to 3,020 days, with a mean of 59.1 days
+among observed values. These describe the prepared subset, not
+necessarily complete career histories.
+
+Model settings and validation races were unchanged.
+
+| Model | Validation race log loss |
+|---|---:|
+| Original logistic regression | 2.225778 |
+| Logistic regression with days since run | 2.222540 |
+
+Observed improvement over the original logistic model: 0.003238.
+The missing-win-rate and missing-gap indicators are identical in
+this all-history dataset. Test performance remains unevaluated.

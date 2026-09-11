@@ -10,6 +10,7 @@ from prior_form import (
     calculate_prior_form,
     calculate_recent_form,
     smoothed_win_rate,
+    calculate_days_since_run,
 )
 from race_metrics import evaluate_race_scores
 
@@ -30,6 +31,7 @@ def save_feature_table(feature_rows, output_path: Path) -> None:
                     prior_starts INTEGER NOT NULL,
                     prior_wins INTEGER NOT NULL,
                     prior_win_rate REAL,
+                    days_since_run INTEGER,
                     won INTEGER NOT NULL CHECK (won IN (0, 1)),
                     split TEXT NOT NULL
                         CHECK (split IN ('train', 'validation')),
@@ -43,7 +45,7 @@ def save_feature_table(feature_rows, output_path: Path) -> None:
                 INSERT INTO features VALUES (
                     :date, :course, :off, :horse,
                     :prior_starts, :prior_wins, :prior_win_rate,
-                    :won, :split
+                    :days_since_run, :won, :split
                 )
                 """,
                 feature_rows,
@@ -146,13 +148,15 @@ def main() -> None:
 
         for horse, records in groupby(rows, key=lambda row: row[0]):
             history = [row[1:] for row in records]
+            gaps = calculate_days_since_run(history)
             if args.window_days is None:
                 features = calculate_prior_form(history)
             else:
                 features = calculate_recent_form(
                     history, window_days=args.window_days
                 )
-            for date, course, off, position, starts, wins, rate in features:
+            for feature, gap in zip(features, gaps, strict=True):
+                date, course, off, position, starts, wins, rate = feature
                 split = "train" if date < "2024-01-01" else "validation"
 
                 feature_rows.append(
@@ -166,6 +170,7 @@ def main() -> None:
                         "prior_win_rate": rate,
                         "won": int(position == "1"),
                         "split": split,
+                        "days_since_run": gap,
                     }
                 )
 

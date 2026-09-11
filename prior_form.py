@@ -78,3 +78,24 @@ def calculate_recent_form(history, window_days=365):
             past_results.append((current_date, position == "1"))
 
     return features
+
+def calculate_days_since_run(history):
+    previous_date = None
+    gaps = []
+
+    for date, records in groupby(history, key=lambda row: row[0]):
+        current_date = calendar_date.fromisoformat(date)
+        day_records = list(records)
+
+        days_since_run = (
+            (current_date - previous_date).days
+            if previous_date is not None
+            else None
+        )
+
+        for _ in day_records:
+            gaps.append(days_since_run)
+
+        previous_date = current_date
+
+    return gaps

@@ -54,9 +54,27 @@ def main() -> None:
                 f"{winners:,} recorded winners"
             )
 
+        total, missing, minimum, maximum, average = connection.execute(
+            """
+            SELECT
+                COUNT(*),
+                SUM(CASE WHEN days_since_run IS NULL THEN 1 ELSE 0 END),
+                MIN(days_since_run),
+                MAX(days_since_run),
+                AVG(days_since_run)
+            FROM features
+            WHERE split = 'train'
+            """
+        ).fetchone()
+
+        print(f"Training gaps missing: {missing:,} of {total:,}")
+        print(f"Observed gap range: {minimum} to {maximum} days")
+        print(f"Mean observed gap: {average:.1f} days")
+
         training_rows = connection.execute(
             """
-            SELECT prior_starts, prior_wins, prior_win_rate, won
+            SELECT prior_starts, prior_wins, prior_win_rate,
+                   days_since_run, won
             FROM features
             WHERE split = 'train'
             ORDER BY date, course, off, horse
@@ -65,8 +83,8 @@ def main() -> None:
 
         training_array = np.array(training_rows, dtype=float)
 
-        X_train = training_array[:, :3]
-        y_train = training_array[:, 3].astype(int)
+        X_train = training_array[:, :4]
+        y_train = training_array[:, 4].astype(int)
 
         print(f"X_train shape: {X_train.shape}")
         print(f"y_train shape: {y_train.shape}")
@@ -105,7 +123,9 @@ def main() -> None:
             "prior_starts",
             "prior_wins",
             "prior_win_rate",
-            "missing_history",
+            "days_since_run",
+            "missing_win_rate",
+            "missing_days_since_run",
         ]
 
         print(f"Iterations used: {model.n_iter_[0]}")
@@ -118,7 +138,8 @@ def main() -> None:
             """
             SELECT
                 date, course, off, horse,
-                prior_starts, prior_wins, prior_win_rate, won
+                prior_starts, prior_wins, prior_win_rate,
+                days_since_run, won
             FROM features
             WHERE split = 'validation'
             ORDER BY date, course, off, horse
@@ -126,11 +147,11 @@ def main() -> None:
         ).fetchall()
 
         X_validation = np.array(
-            [row[4:7] for row in validation_rows],
+            [row[4:8] for row in validation_rows],
             dtype=float,
         )
         y_validation = np.array(
-            [row[7] for row in validation_rows],
+            [row[8] for row in validation_rows],
             dtype=int,
         )
 
@@ -146,7 +167,7 @@ def main() -> None:
 
         for row, probability in zip(validation_rows, probabilities):
             date, course, off, horse = row[:4]
-            won = row[7]
+            won = row[8]
             race_key = (date, course, off)
 
             winner_marker = "1" if won == 1 else "0"
@@ -201,6 +222,7 @@ def main() -> None:
                     "prior_starts",
                     "prior_wins",
                     "prior_win_rate",
+                    "days_since_run",
                 ],
                 "history_window_days": None,
                 "training_end_exclusive": "2024-01-01",

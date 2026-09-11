@@ -19,22 +19,34 @@ def main() -> None:
     with args.model.open("rb") as file:
         bundle = pickle.load(file)
 
-    expected_features = [
+    input_features = bundle["input_features"]
+
+    allowed_features = {
         "prior_starts",
         "prior_wins",
         "prior_win_rate",
-    ]
-    if bundle["input_features"] != expected_features:
-        raise ValueError("Saved model expects different input columns")
+        "days_since_run",
+    }
+
+    if (
+        not input_features
+        or len(input_features) != len(set(input_features))
+        or any(name not in allowed_features for name in input_features)
+    ):
+        raise ValueError("Invalid input-feature list in saved model")
+
+    feature_columns = ", ".join(
+        f'"{name}"' for name in input_features
+    )
 
     pipeline = bundle["pipeline"]
     connection = open_database(args.database.resolve())
 
     try:
         rows = connection.execute(
-            """
+            f"""
             SELECT date, course, off, horse,
-                   prior_starts, prior_wins, prior_win_rate, won
+                   {feature_columns}, won
             FROM features
             WHERE split = 'validation'
             ORDER BY date, course, off, horse
@@ -43,7 +55,7 @@ def main() -> None:
     finally:
         connection.close()
 
-    X = np.array([row[4:7] for row in rows], dtype=float)
+    X = np.array([row[4:-1] for row in rows], dtype=float)
     win_column = list(pipeline.classes_).index(1)
     probabilities = pipeline.predict_proba(X)[:, win_column]
 
@@ -52,7 +64,7 @@ def main() -> None:
     for row, probability in zip(rows, probabilities):
         race_key = tuple(row[:3])
         horse = row[3]
-        winner_marker = "1" if row[7] == 1 else "0"
+        winner_marker = "1" if row[-1] == 1 else "0"
 
         race_scores.setdefault(race_key, []).append(
             (horse, winner_marker, float(probability))

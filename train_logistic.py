@@ -4,6 +4,9 @@ import numpy as np
 import json
 from pathlib import Path
 
+import pickle
+import sklearn
+
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
@@ -23,7 +26,15 @@ def main() -> None:
         type=Path,
         help="Save settings and metrics to a new JSON file",
     )
+    parser.add_argument(
+        "--model-output",
+        type=Path,
+        help="Save the fitted pipeline to a new file",
+    )
     args = parser.parse_args()
+
+    if args.model_output is not None and args.model_output.exists():
+        parser.error(f"Model output already exists: {args.model_output}")
 
     connection = open_database(args.database.resolve())
 
@@ -182,6 +193,27 @@ def main() -> None:
                 file.write("\n")
 
             print(f"Report saved to: {args.report}")
+
+        if args.model_output is not None:
+            bundle = {
+                "pipeline": pipeline,
+                "input_features": [
+                    "prior_starts",
+                    "prior_wins",
+                    "prior_win_rate",
+                ],
+                "history_window_days": None,
+                "training_end_exclusive": "2024-01-01",
+                "sklearn_version": sklearn.__version__,
+                "probability_normalization": "divide by race total",
+            }
+
+            args.model_output.parent.mkdir(parents=True, exist_ok=True)
+
+            with args.model_output.open("xb") as file:
+                pickle.dump(bundle, file)
+
+            print(f"Model saved to: {args.model_output}")
 
     finally:
         connection.close()

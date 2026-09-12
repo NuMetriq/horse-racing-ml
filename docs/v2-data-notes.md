@@ -203,3 +203,28 @@ because probabilities sum to one per race and each race has one winner.
 That equality alone does not demonstrate calibration.
 
 No calibration adjustment was applied. The test set remains unevaluated.
+
+### Log-transformed days since run
+
+Replaced the raw days-since-run input with log1p(days_since_run)
+inside the pipeline, before imputation and scaling.
+
+All other inputs, model settings, and data splits stayed the same.
+
+| Gap representation | Validation race log loss |
+|---|---:|
+| Raw days | 2.222540 |
+| log1p(days) | 2.220082 |
+
+Validation log loss improved by 0.002458.
+Reloading the saved pipeline reproduced the score of 2.220082.
+
+The log-gap model is the current preferred candidate based on
+validation performance. The test set remains unevaluated.
+
+Artifacts:
+- Report: outputs/reports/v2_logistic_log_gap.json
+- Model: outputs/models/v2_logistic_log_gap.pkl
+
+The saved pipeline uses the function in feature_transforms.py,
+which must remain available when loading the model.

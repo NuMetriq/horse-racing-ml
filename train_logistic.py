@@ -9,6 +9,8 @@ import sklearn
 
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import FunctionTransformer
+from feature_transforms import log_days_since_run
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 
@@ -93,6 +95,10 @@ def main() -> None:
         pipeline = Pipeline(
             [
                 (
+                    "log_gap",
+                    FunctionTransformer(log_days_since_run, validate=False),
+                ),
+                (
                     "imputer",
                     SimpleImputer(
                         strategy="constant",
@@ -123,7 +129,7 @@ def main() -> None:
             "prior_starts",
             "prior_wins",
             "prior_win_rate",
-            "days_since_run",
+            "log1p_days_since_run",
             "missing_win_rate",
             "missing_days_since_run",
         ]

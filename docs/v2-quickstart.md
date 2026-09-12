@@ -22,7 +22,7 @@ Create the prepared dataset and all-history features:
 
 ```powershell
 python prepare_data.py $rawDatabase --output data/processed/v2_flat_competitive.db
-python build_features.py data/processed/v2_flat_competitive.db --alpha 30 --features-output data/processed/v2_features_with_previous_position.db
+python build_features.py data/processed/v2_flat_competitive.db --alpha 30 --features-output data/processed/v2_features_with_previous_field.db
 ```
 
 These commands require new output paths. Skip completed exports when
@@ -31,7 +31,7 @@ reusing existing files from the same dataset version and preparation rules.
 ## Train and save
 
 ```powershell
-python train_logistic.py data/processed/v2_features_with_previous_position.db --model-output outputs/models/v2_logistic_previous_position.pkl
+python train_logistic.py data/processed/v2_features_with_previous_field.db --model-output outputs/models/v2_logistic_previous_field.pkl
 ```
 
 The model-output path must not already exist.
@@ -39,12 +39,12 @@ The model-output path must not already exist.
 ## Evaluate without retraining
 
 ```powershell
-python evaluate_saved.py data/processed/v2_features_with_previous_position.db outputs/models/v2_logistic_previous_position.pkl
+python evaluate_saved.py data/processed/v2_features_with_previous_field.db outputs/models/v2_logistic_previous_field.pkl
 ```
 
 Expected 2024 validation results:
 - Races: 11,637
-- Logistic race log loss: 2.171974
+- Logistic race log loss: 2.165894
 - Uniform race log loss: 2.253199
 
 Only load trusted pickle files. Use the same package environment

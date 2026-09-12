@@ -77,7 +77,7 @@ def main() -> None:
         training_rows = connection.execute(
             """
             SELECT prior_starts, prior_wins, prior_win_rate,
-                   days_since_run, previous_position, won
+                   days_since_run, previous_position, previous_runner_count, won
             FROM features
             WHERE split = 'train'
             ORDER BY date, course, off, horse
@@ -89,6 +89,7 @@ def main() -> None:
                 (
                     *row[:4],
                     *encode_previous_position(row[4]),
+                    row[5],
                 )
                 for row in training_rows
             ],
@@ -96,7 +97,7 @@ def main() -> None:
         )
 
         y_train = np.array(
-            [row[5] for row in training_rows],
+            [row[6] for row in training_rows],
             dtype=int,
         )
 
@@ -144,9 +145,11 @@ def main() -> None:
             "log1p_days_since_run",
             "previous_finish_position",
             "previous_result_was_code",
+            "previous_runner_count",
             "missing_win_rate",
             "missing_days_since_run",
             "missing_previous_finish_position",
+            "missing_previous_runner_count",
         ]
 
         print(f"Iterations used: {model.n_iter_[0]}")
@@ -160,7 +163,7 @@ def main() -> None:
             SELECT
                 date, course, off, horse,
                 prior_starts, prior_wins, prior_win_rate,
-                days_since_run, previous_position, won
+                days_since_run, previous_position, previous_runner_count, won
             FROM features
             WHERE split = 'validation'
             ORDER BY date, course, off, horse
@@ -172,6 +175,7 @@ def main() -> None:
                 (
                     *row[4:8],
                     *encode_previous_position(row[8]),
+                    row[9],
                 )
                 for row in validation_rows
             ],
@@ -179,7 +183,7 @@ def main() -> None:
         )
 
         y_validation = np.array(
-            [row[9] for row in validation_rows],
+            [row[10] for row in validation_rows],
             dtype=int,
         )
 
@@ -198,7 +202,7 @@ def main() -> None:
             won = row[9]
             race_key = (date, course, off)
 
-            winner_marker = "1" if won == 1 else "0"
+            winner_marker = "1" if row[-1] == 1 else "0"
 
             validation_scores.setdefault(race_key, []).append(
                 (horse, winner_marker, float(probability))
@@ -253,6 +257,7 @@ def main() -> None:
                     "prior_win_rate",
                     "days_since_run",
                     "previous_position",
+                    "previous_runner_count",
                 ],
                 "input_features": [
                     "prior_starts",
@@ -261,8 +266,9 @@ def main() -> None:
                     "days_since_run",
                     "previous_finish_position",
                     "previous_result_was_code",
+                    "previous_runner_count",
                 ],
-                "input_encoding": "previous_position_v1",
+                "input_encoding": "previous_position_field_v1",
                 "history_window_days": None,
                 "training_end_exclusive": "2024-01-01",
                 "sklearn_version": sklearn.__version__,

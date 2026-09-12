@@ -68,6 +68,34 @@ def main() -> None:
                 "Feature order does not match previous_position_v1"
             )
 
+    elif encoding == "previous_position_field_v1":
+        source_features = [
+            "prior_starts",
+            "prior_wins",
+            "prior_win_rate",
+            "days_since_run",
+            "previous_position",
+            "previous_runner_count",
+        ]
+
+        expected_inputs = [
+            "prior_starts",
+            "prior_wins",
+            "prior_win_rate",
+            "days_since_run",
+            "previous_finish_position",
+            "previous_result_was_code",
+            "previous_runner_count",
+        ]
+
+        if (
+            bundle.get("source_features") != source_features
+            or input_features != expected_inputs
+        ):
+            raise ValueError(
+                "Feature order does not match previous_position_field_v1"
+            )
+
     else:
         raise ValueError(f"Unknown input encoding: {encoding!r}")
 
@@ -98,15 +126,24 @@ def main() -> None:
             ],
             dtype=float,
         )
+
+    elif encoding == "previous_position_field_v1":
+        X = np.array(
+            [
+                (
+                    *row[4:8],
+                    *encode_previous_position(row[8]),
+                    row[9],
+                )
+                for row in rows
+            ],
+            dtype=float,
+        )
+
     else:
         X = np.array(
             [row[4:-1] for row in rows],
             dtype=float,
-        )
-
-    if X.shape[1] != pipeline.n_features_in_:
-        raise ValueError(
-            "Input column count does not match the saved pipeline"
         )
     
     win_column = list(pipeline.classes_).index(1)

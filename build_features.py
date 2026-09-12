@@ -12,6 +12,7 @@ from prior_form import (
     smoothed_win_rate,
     calculate_days_since_run,
     calculate_previous_position,
+    calculate_previous_runner_count,
 )
 from race_metrics import evaluate_race_scores
 
@@ -34,6 +35,7 @@ def save_feature_table(feature_rows, output_path: Path) -> None:
                     prior_win_rate REAL,
                     days_since_run INTEGER,
                     previous_position TEXT,
+                    previous_runner_count INTEGER,
                     won INTEGER NOT NULL CHECK (won IN (0, 1)),
                     split TEXT NOT NULL
                         CHECK (split IN ('train', 'validation')),
@@ -47,12 +49,12 @@ def save_feature_table(feature_rows, output_path: Path) -> None:
                 INSERT INTO features (
                     date, course, off, horse,
                     prior_starts, prior_wins, prior_win_rate,
-                    days_since_run, previous_position, won, split
+                    days_since_run, previous_position, previous_runner_count, won, split
                 )
                 VALUES (
                     :date, :course, :off, :horse,
                     :prior_starts, :prior_wins, :prior_win_rate,
-                    :days_since_run, :previous_position, :won, :split
+                    :days_since_run, :previous_position, :previous_runner_count, :won, :split
                 )
                 """,
                 feature_rows,
@@ -136,10 +138,16 @@ def main() -> None:
 
         rows = connection.execute(
             """
-            SELECT horse, date, course, off, finish_position
-            FROM runners
-            WHERE date < '2025-01-01'
-            ORDER BY horse, date, course, off
+            SELECT
+                r.horse, r.date, r.course, r.off,
+                r.finish_position, races.runner_count
+            FROM runners AS r
+            JOIN races
+                ON r.date = races.date
+                AND r.course = races.course
+                AND r.off = races.off
+            WHERE r.date < '2025-01-01'
+            ORDER BY r.horse, r.date, r.course, r.off
             """
         )
 
@@ -154,7 +162,12 @@ def main() -> None:
         feature_rows = []
 
         for horse, records in groupby(rows, key=lambda row: row[0]):
-            history = [row[1:] for row in records]
+            horse_rows = list(records)
+            history = [row[1:5] for row in horse_rows]
+            runner_counts = [row[5] for row in horse_rows]
+            previous_runner_counts = calculate_previous_runner_count(
+                history, runner_counts
+            )
             previous_positions = calculate_previous_position(history)
             gaps = calculate_days_since_run(history)
             if args.window_days is None:
@@ -164,8 +177,12 @@ def main() -> None:
                     history, window_days=args.window_days
                 )
 
-            for feature, gap, previous_position in zip(
-                features, gaps, previous_positions, strict=True
+            for feature, gap, previous_position, previous_runner_count in zip(
+                features,
+                gaps,
+                previous_positions,
+                previous_runner_counts,
+                strict=True,
             ):
                 date, course, off, position, starts, wins, rate = feature
                 split = "train" if date < "2024-01-01" else "validation"
@@ -183,6 +200,7 @@ def main() -> None:
                         "split": split,
                         "days_since_run": gap,
                         "previous_position": previous_position,
+                        "previous_runner_count": previous_runner_count,
                     }
                 )
 

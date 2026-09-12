@@ -5,6 +5,7 @@ from prior_form import (
     calculate_recent_form,
     calculate_days_since_run,
     calculate_previous_position,
+    calculate_previous_runner_count,
 )
 
 
@@ -66,6 +67,22 @@ class PriorFormTests(unittest.TestCase):
             actual,
             [None, "5", "5", None, "PU", "4"],
         )
+
+    def test_previous_runner_count_excludes_same_day_results(self):
+        history = [
+            ("2023-01-01", "Course A", "1:00", "5"),
+            ("2023-01-10", "Course A", "2:00", "2"),
+            ("2023-01-10", "Course B", "3:00", "3"),
+            ("2023-01-20", "Course A", "1:00", "PU"),
+            ("2023-02-01", "Course A", "1:00", "4"),
+        ]
+        runner_counts = [6, 10, 12, 8, 14]
+
+        actual = calculate_previous_runner_count(
+            history, runner_counts
+        )
+
+        self.assertEqual(actual, [None, 6, 6, None, 8])
 
 if __name__ == "__main__":
     unittest.main()

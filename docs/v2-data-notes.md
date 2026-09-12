@@ -273,3 +273,24 @@ reduction occurred in races with 13 or more runners.
 Both saved models were evaluated on the same validation races.
 These groups describe the current race's field size, not the
 horse's previous race. The test set remains unevaluated.
+
+### Previous race field size
+
+Added previous_runner_count alongside previous finishing position.
+Both refer to the same most recent recorded race on an earlier date
+within the prepared dataset.
+
+Same-day results are excluded. If the most recent earlier date has
+multiple records, both previous position and field size are unknown.
+
+Training and saved-model evaluation use the
+previous_position_field_v1 encoding.
+
+| Model | Validation race log loss |
+|---|---:|
+| Previous position | 2.171974 |
+| Previous position + previous runner count | 2.165894 |
+
+Validation log loss improved by 0.006080.
+Saved-model evaluation reproduced 2.165894.
+The test set remains unevaluated.

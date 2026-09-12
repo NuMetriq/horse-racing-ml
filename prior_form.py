@@ -118,3 +118,25 @@ def calculate_previous_position(history):
             previous_position = None
 
     return positions
+
+def calculate_previous_runner_count(history, runner_counts):
+    """Return the previous race's field size, excluding same-day results."""
+    previous_count = None
+    counts = []
+
+    paired_records = zip(history, runner_counts, strict=True)
+
+    for date, records in groupby(
+        paired_records, key=lambda pair: pair[0][0]
+    ):
+        day_records = list(records)
+
+        for _ in day_records:
+            counts.append(previous_count)
+
+        if len(day_records) == 1:
+            previous_count = day_records[0][1]
+        else:
+            previous_count = None
+
+    return counts

@@ -99,3 +99,22 @@ def calculate_days_since_run(history):
         previous_date = current_date
 
     return gaps
+
+def calculate_previous_position(history):
+    """Return the previous recorded position, excluding same-day results."""
+    previous_position = None
+    positions = []
+
+    for date, records in groupby(history, key=lambda row: row[0]):
+        day_records = list(records)
+
+        for _ in day_records:
+            positions.append(previous_position)
+
+        if len(day_records) == 1:
+            previous_position = day_records[0][3]
+        else:
+            # Multiple records on one date have no reliable ordering.
+            previous_position = None
+
+    return positions

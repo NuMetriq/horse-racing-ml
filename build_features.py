@@ -11,6 +11,7 @@ from prior_form import (
     calculate_recent_form,
     smoothed_win_rate,
     calculate_days_since_run,
+    calculate_previous_position,
 )
 from race_metrics import evaluate_race_scores
 
@@ -32,6 +33,7 @@ def save_feature_table(feature_rows, output_path: Path) -> None:
                     prior_wins INTEGER NOT NULL,
                     prior_win_rate REAL,
                     days_since_run INTEGER,
+                    previous_position TEXT,
                     won INTEGER NOT NULL CHECK (won IN (0, 1)),
                     split TEXT NOT NULL
                         CHECK (split IN ('train', 'validation')),
@@ -42,10 +44,15 @@ def save_feature_table(feature_rows, output_path: Path) -> None:
 
             destination.executemany(
                 """
-                INSERT INTO features VALUES (
+                INSERT INTO features (
+                    date, course, off, horse,
+                    prior_starts, prior_wins, prior_win_rate,
+                    days_since_run, previous_position, won, split
+                )
+                VALUES (
                     :date, :course, :off, :horse,
                     :prior_starts, :prior_wins, :prior_win_rate,
-                    :days_since_run, :won, :split
+                    :days_since_run, :previous_position, :won, :split
                 )
                 """,
                 feature_rows,
@@ -148,6 +155,7 @@ def main() -> None:
 
         for horse, records in groupby(rows, key=lambda row: row[0]):
             history = [row[1:] for row in records]
+            previous_positions = calculate_previous_position(history)
             gaps = calculate_days_since_run(history)
             if args.window_days is None:
                 features = calculate_prior_form(history)
@@ -155,7 +163,10 @@ def main() -> None:
                 features = calculate_recent_form(
                     history, window_days=args.window_days
                 )
-            for feature, gap in zip(features, gaps, strict=True):
+
+            for feature, gap, previous_position in zip(
+                features, gaps, previous_positions, strict=True
+            ):
                 date, course, off, position, starts, wins, rate = feature
                 split = "train" if date < "2024-01-01" else "validation"
 
@@ -171,6 +182,7 @@ def main() -> None:
                         "won": int(position == "1"),
                         "split": split,
                         "days_since_run": gap,
+                        "previous_position": previous_position,
                     }
                 )
 

@@ -16,6 +16,7 @@ from sklearn.pipeline import Pipeline
 
 from inspect_data import open_database
 from race_metrics import evaluate_race_scores
+from feature_transforms import encode_previous_position
 
 
 def main() -> None:
@@ -76,17 +77,28 @@ def main() -> None:
         training_rows = connection.execute(
             """
             SELECT prior_starts, prior_wins, prior_win_rate,
-                   days_since_run, won
+                   days_since_run, previous_position, won
             FROM features
             WHERE split = 'train'
             ORDER BY date, course, off, horse
             """
         ).fetchall()
 
-        training_array = np.array(training_rows, dtype=float)
+        X_train = np.array(
+            [
+                (
+                    *row[:4],
+                    *encode_previous_position(row[4]),
+                )
+                for row in training_rows
+            ],
+            dtype=float,
+        )
 
-        X_train = training_array[:, :4]
-        y_train = training_array[:, 4].astype(int)
+        y_train = np.array(
+            [row[5] for row in training_rows],
+            dtype=int,
+        )
 
         print(f"X_train shape: {X_train.shape}")
         print(f"y_train shape: {y_train.shape}")
@@ -130,8 +142,11 @@ def main() -> None:
             "prior_wins",
             "prior_win_rate",
             "log1p_days_since_run",
+            "previous_finish_position",
+            "previous_result_was_code",
             "missing_win_rate",
             "missing_days_since_run",
+            "missing_previous_finish_position",
         ]
 
         print(f"Iterations used: {model.n_iter_[0]}")
@@ -145,7 +160,7 @@ def main() -> None:
             SELECT
                 date, course, off, horse,
                 prior_starts, prior_wins, prior_win_rate,
-                days_since_run, won
+                days_since_run, previous_position, won
             FROM features
             WHERE split = 'validation'
             ORDER BY date, course, off, horse
@@ -153,11 +168,18 @@ def main() -> None:
         ).fetchall()
 
         X_validation = np.array(
-            [row[4:8] for row in validation_rows],
+            [
+                (
+                    *row[4:8],
+                    *encode_previous_position(row[8]),
+                )
+                for row in validation_rows
+            ],
             dtype=float,
         )
+
         y_validation = np.array(
-            [row[8] for row in validation_rows],
+            [row[9] for row in validation_rows],
             dtype=int,
         )
 
@@ -173,7 +195,7 @@ def main() -> None:
 
         for row, probability in zip(validation_rows, probabilities):
             date, course, off, horse = row[:4]
-            won = row[8]
+            won = row[9]
             race_key = (date, course, off)
 
             winner_marker = "1" if won == 1 else "0"
@@ -211,6 +233,7 @@ def main() -> None:
                 "model_log_loss": model_loss,
                 "uniform_log_loss": uniform_loss,
                 "improvement": uniform_loss - model_loss,
+                "input_encoding": "previous_position_v1",
             }
 
             args.report.parent.mkdir(parents=True, exist_ok=True)
@@ -224,12 +247,22 @@ def main() -> None:
         if args.model_output is not None:
             bundle = {
                 "pipeline": pipeline,
+                "source_features": [
+                    "prior_starts",
+                    "prior_wins",
+                    "prior_win_rate",
+                    "days_since_run",
+                    "previous_position",
+                ],
                 "input_features": [
                     "prior_starts",
                     "prior_wins",
                     "prior_win_rate",
                     "days_since_run",
+                    "previous_finish_position",
+                    "previous_result_was_code",
                 ],
+                "input_encoding": "previous_position_v1",
                 "history_window_days": None,
                 "training_end_exclusive": "2024-01-01",
                 "sklearn_version": sklearn.__version__,

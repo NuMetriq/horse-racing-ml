@@ -6,3 +6,18 @@ def log_days_since_run(X):
     transformed = np.array(X, dtype=float, copy=True)
     transformed[:, 3] = np.log1p(transformed[:, 3])
     return transformed
+
+def encode_previous_position(value):
+    """Return numeric finish position and a result-code flag."""
+    if value is None:
+        return np.nan, 0.0
+
+    text = str(value).strip()
+
+    if text in ("", "0"):
+        return np.nan, 0.0
+
+    if text.isdecimal():
+        return float(text), 0.0
+
+    return np.nan, 1.0

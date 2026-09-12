@@ -1,0 +1,41 @@
+{
+  "model": "logistic_regression",
+  "database": "C:\\Users\\Owner\\Documents\\NuMetriq\\horse-racing-ml\\data\\processed\\v2_features_with_previous_position.db",
+  "features": [
+    "prior_starts",
+    "prior_wins",
+    "prior_win_rate",
+    "log1p_days_since_run",
+    "previous_finish_position",
+    "previous_result_was_code",
+    "missing_win_rate",
+    "missing_days_since_run",
+    "missing_previous_finish_position"
+  ],
+  "imputation": "constant zero with missing indicator",
+  "scaling": "standard scaler fitted on training",
+  "solver": "lbfgs",
+  "C": 1.0,
+  "max_iter": 1000,
+  "iterations_used": 14,
+  "intercept": -2.292175805304528,
+  "coefficients": [
+    -0.16027770587068452,
+    0.0760978966573923,
+    0.07355919950417589,
+    -0.133556445229682,
+    -0.49080159012522595,
+    -0.013828975005799427,
+    -0.1366264345787517,
+    -0.1366264345787517,
+    -0.13765078959239485
+  ],
+  "validation_start": "2024-01-01",
+  "validation_end_exclusive": "2025-01-01",
+  "validation_races": 11637,
+  "probability_normalization": "divide by race total",
+  "model_log_loss": 2.171974378957509,
+  "uniform_log_loss": 2.2531991737595933,
+  "improvement": 0.08122479480208433,
+  "input_encoding": "previous_position_v1"
+}

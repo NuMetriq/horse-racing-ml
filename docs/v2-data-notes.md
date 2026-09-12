@@ -228,3 +228,32 @@ Artifacts:
 
 The saved pipeline uses the function in feature_transforms.py,
 which must remain available when loading the model.
+
+### Previous recorded finishing position
+
+Added the horse's previous recorded position from an earlier date
+within the prepared dataset. Same-day results are excluded.
+
+If the most recent earlier date contains multiple records, the
+previous position is treated as unknown.
+
+Positive numeric positions become a numeric input. Result codes
+become a missing numeric position plus a separate code flag.
+Missing values and position "0" become a missing numeric position
+with the code flag set to zero.
+
+The pipeline imputes missing numeric positions and adds a missing
+indicator. Training and saved-model evaluation use the same
+previous_position_v1 encoding.
+
+| Model | Validation race log loss |
+|---|---:|
+| Logistic with log gap | 2.220082 |
+| Logistic with log gap and previous position | 2.171974 |
+
+Validation log loss improved by 0.048108.
+Saved-model evaluation reproduced 2.171974.
+The test set remains unevaluated.
+
+History refers to available records in the prepared dataset,
+not necessarily the horse's complete racing career.

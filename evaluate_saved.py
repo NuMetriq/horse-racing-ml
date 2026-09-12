@@ -6,6 +6,7 @@ import numpy as np
 from inspect_data import open_database
 from pathlib import Path
 from race_metrics import evaluate_race_scores
+from feature_transforms import encode_previous_position
 
 
 def main() -> None:
@@ -19,27 +20,61 @@ def main() -> None:
     with args.model.open("rb") as file:
         bundle = pickle.load(file)
 
+    pipeline = bundle["pipeline"]
     input_features = bundle["input_features"]
+    encoding = bundle.get("input_encoding")
 
-    allowed_features = {
-        "prior_starts",
-        "prior_wins",
-        "prior_win_rate",
-        "days_since_run",
-    }
+    if encoding is None:
+        # Older models receive numeric database columns directly.
+        allowed_features = {
+            "prior_starts",
+            "prior_wins",
+            "prior_win_rate",
+            "days_since_run",
+        }
 
-    if (
-        not input_features
-        or len(input_features) != len(set(input_features))
-        or any(name not in allowed_features for name in input_features)
-    ):
-        raise ValueError("Invalid input-feature list in saved model")
+        if (
+            not input_features
+            or len(input_features) != len(set(input_features))
+            or any(name not in allowed_features for name in input_features)
+        ):
+            raise ValueError("Invalid input-feature list in saved model")
+
+        source_features = input_features
+
+    elif encoding == "previous_position_v1":
+        source_features = [
+            "prior_starts",
+            "prior_wins",
+            "prior_win_rate",
+            "days_since_run",
+            "previous_position",
+        ]
+
+        expected_inputs = [
+            "prior_starts",
+            "prior_wins",
+            "prior_win_rate",
+            "days_since_run",
+            "previous_finish_position",
+            "previous_result_was_code",
+        ]
+
+        if (
+            bundle.get("source_features") != source_features
+            or input_features != expected_inputs
+        ):
+            raise ValueError(
+                "Feature order does not match previous_position_v1"
+            )
+
+    else:
+        raise ValueError(f"Unknown input encoding: {encoding!r}")
 
     feature_columns = ", ".join(
-        f'"{name}"' for name in input_features
+        f'"{name}"' for name in source_features
     )
 
-    pipeline = bundle["pipeline"]
     connection = open_database(args.database.resolve())
 
     try:
@@ -55,7 +90,25 @@ def main() -> None:
     finally:
         connection.close()
 
-    X = np.array([row[4:-1] for row in rows], dtype=float)
+    if encoding == "previous_position_v1":
+        X = np.array(
+            [
+                (*row[4:8], *encode_previous_position(row[8]))
+                for row in rows
+            ],
+            dtype=float,
+        )
+    else:
+        X = np.array(
+            [row[4:-1] for row in rows],
+            dtype=float,
+        )
+
+    if X.shape[1] != pipeline.n_features_in_:
+        raise ValueError(
+            "Input column count does not match the saved pipeline"
+        )
+    
     win_column = list(pipeline.classes_).index(1)
     probabilities = pipeline.predict_proba(X)[:, win_column]
 

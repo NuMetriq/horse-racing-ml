@@ -174,6 +174,34 @@ def main() -> None:
     print(f"Saved-model race log loss: {model_loss:.6f}")
     print(f"Uniform race log loss: {uniform_loss:.6f}")
 
+    field_size_groups = [
+        ("2-7 runners", 2, 7),
+        ("8-12 runners", 8, 12),
+        ("13+ runners", 13, None),
+    ]
+
+    for label, minimum, maximum in field_size_groups:
+        grouped_scores = {
+            race_key: runners
+            for race_key, runners in race_scores.items()
+            if len(runners) >= minimum
+            and (maximum is None or len(runners) <= maximum)
+        }
+
+        if not grouped_scores:
+            continue
+
+        group_model_loss, group_uniform_loss = evaluate_race_scores(
+            grouped_scores
+        )
+
+        print(
+            f"{label}: {len(grouped_scores):,} races | "
+            f"Model: {group_model_loss:.6f} | "
+            f"Uniform: {group_uniform_loss:.6f} | "
+            f"Improvement: {group_uniform_loss - group_model_loss:.6f}"
+        )
+
 
 if __name__ == "__main__":
     main()

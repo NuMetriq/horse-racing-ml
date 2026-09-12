@@ -257,3 +257,19 @@ The test set remains unevaluated.
 
 History refers to available records in the prepared dataset,
 not necessarily the horse's complete racing career.
+
+
+| Current field size | Races | Log-gap model log loss | Previous-position model log loss | Loss reduction |
+|---|---:|---:|---:|---:|
+| 2–7 runners | 2,762 | 1.739591 | 1.708877 | 0.030714 |
+| 8–12 runners | 6,310 | 2.253233 | 2.204126 | 0.049107 |
+| 13+ runners | 2,565 | 2.655922 | 2.591545 | 0.064377 |
+
+
+The previous-position model improved validation race log loss
+across all three current-field-size groups. The largest absolute
+reduction occurred in races with 13 or more runners.
+
+Both saved models were evaluated on the same validation races.
+These groups describe the current race's field size, not the
+horse's previous race. The test set remains unevaluated.

@@ -31,7 +31,7 @@ reusing existing files from the same dataset version and preparation rules.
 ## Train and save
 
 ```powershell
-python train_logistic.py data/processed/v2_features_with_gap.db --model-output outputs/models/v2_logistic_with_gap.pkl
+python train_logistic.py data/processed/v2_features_with_gap.db --model-output outputs/models/v2_logistic_log_gap.pkl
 ```
 
 The model-output path must not already exist.
@@ -39,12 +39,12 @@ The model-output path must not already exist.
 ## Evaluate without retraining
 
 ```powershell
-python evaluate_saved.py data/processed/v2_features_with_gap.db outputs/models/v2_logistic_with_gap.pkl
+python evaluate_saved.py data/processed/v2_features_with_gap.db outputs/models/v2_logistic_log_gap.pkl
 ```
 
 Expected 2024 validation results:
 - Races: 11,637
-- Logistic race log loss: 2.222540
+- Logistic race log loss: 2.220082
 - Uniform race log loss: 2.253199
 
 Only load trusted pickle files. Use the same package environment
@@ -61,3 +61,6 @@ See v2-data-notes.md for selection rules, splits, and limitations.
 
 The current logistic model uses prior starts, prior wins, prior win
 rate, and days since the previous recorded race on an earlier date.
+
+The log-gap model requires feature_transforms.py to be available
+when training or loading the saved pipeline.

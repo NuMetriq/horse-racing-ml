@@ -22,7 +22,7 @@ Create the prepared dataset and all-history features:
 
 ```powershell
 python prepare_data.py $rawDatabase --output data/processed/v2_flat_competitive.db
-python build_features.py data/processed/v2_flat_competitive.db --alpha 30 --features-output data/processed/v2_features_with_gap.db
+python build_features.py data/processed/v2_flat_competitive.db --alpha 30 --features-output data/processed/v2_features_with_previous_position.db
 ```
 
 These commands require new output paths. Skip completed exports when
@@ -31,7 +31,7 @@ reusing existing files from the same dataset version and preparation rules.
 ## Train and save
 
 ```powershell
-python train_logistic.py data/processed/v2_features_with_gap.db --model-output outputs/models/v2_logistic_log_gap.pkl
+python train_logistic.py data/processed/v2_features_with_previous_position.db --model-output outputs/models/v2_logistic_previous_position.pkl
 ```
 
 The model-output path must not already exist.
@@ -39,12 +39,12 @@ The model-output path must not already exist.
 ## Evaluate without retraining
 
 ```powershell
-python evaluate_saved.py data/processed/v2_features_with_gap.db outputs/models/v2_logistic_log_gap.pkl
+python evaluate_saved.py data/processed/v2_features_with_previous_position.db outputs/models/v2_logistic_previous_position.pkl
 ```
 
 Expected 2024 validation results:
 - Races: 11,637
-- Logistic race log loss: 2.220082
+- Logistic race log loss: 2.171974
 - Uniform race log loss: 2.253199
 
 Only load trusted pickle files. Use the same package environment
@@ -59,8 +59,6 @@ python -m unittest test_prior_form test_race_metrics
 The reserved test period remains unevaluated.
 See v2-data-notes.md for selection rules, splits, and limitations.
 
-The current logistic model uses prior starts, prior wins, prior win
-rate, and days since the previous recorded race on an earlier date.
-
-The log-gap model requires feature_transforms.py to be available
-when training or loading the saved pipeline.
+The model requires feature_transforms.py when training or evaluating.
+It supplies the previous-position encoding and the pipeline's
+logarithmic gap transformation.

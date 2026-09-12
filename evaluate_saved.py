@@ -70,6 +70,51 @@ def main() -> None:
             (horse, winner_marker, float(probability))
         )
 
+    normalized_probabilities = []
+    outcomes = []
+
+    for runners in race_scores.values():
+        total_score = sum(score for _, _, score in runners)
+
+        for horse, winner_marker, score in runners:
+            normalized_probabilities.append(score / total_score)
+            outcomes.append(int(winner_marker == "1"))
+
+    normalized_probabilities = np.array(normalized_probabilities)
+    outcomes = np.array(outcomes)
+
+    print(f"Calibration runner count: {len(outcomes):,}")
+    print(f"Mean predicted probability: {normalized_probabilities.mean():.6f}")
+    print(f"Observed win rate: {outcomes.mean():.6f}")
+
+    bin_edges = [0.0, 0.05, 0.10, 0.15, 0.20, 0.30, 0.50, 1.0]
+
+    for lower, upper in zip(bin_edges[:-1], bin_edges[1:]):
+        if upper == 1.0:
+            mask = (
+                (normalized_probabilities >= lower)
+                & (normalized_probabilities <= upper)
+            )
+        else:
+            mask = (
+                (normalized_probabilities >= lower)
+                & (normalized_probabilities < upper)
+            )
+
+        count = int(mask.sum())
+
+        if count == 0:
+            continue
+
+        predicted = normalized_probabilities[mask].mean()
+        observed = outcomes[mask].mean()
+
+        print(
+            f"{lower:.0%}–{upper:.0%} | Runners: {count:,} | "
+            f"Mean predicted: {predicted:.2%} | "
+            f"Observed wins: {observed:.2%}"
+        )
+
     model_loss, uniform_loss = evaluate_race_scores(race_scores)
 
     print(f"Validation races: {len(race_scores):,}")

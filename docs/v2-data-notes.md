@@ -175,3 +175,31 @@ Model settings and validation races were unchanged.
 Observed improvement over the original logistic model: 0.003238.
 The missing-win-rate and missing-gap indicators are identical in
 this all-history dataset. Test performance remains unevaluated.
+
+### Validation calibration: logistic model with days since run
+
+Calibration was inspected using race-normalized probabilities on the
+2024 validation set (117,378 runners across 11,637 races).
+
+| Probability band | Runners | Mean predicted | Observed win rate |
+|---|---:|---:|---:|
+| 0–5% | 4,649 | 4.17% | 4.17% |
+| 5–10% | 67,582 | 7.71% | 7.37% |
+| 10–15% | 33,533 | 11.97% | 12.40% |
+| 15–20% | 8,296 | 16.92% | 17.10% |
+| 20–30% | 2,959 | 23.21% | 25.38% |
+| 30–50% | 353 | 34.58% | 37.39% |
+| 50–100% | 6 | 57.17% | 33.33% |
+
+Bands include their lower bound and exclude their upper bound,
+except the final band, which includes 100%.
+
+Predicted and observed rates were close in the larger lower-probability
+bands. The 20–30% and 30–50% bands showed underprediction. The final
+band contained too few runners for a reliable conclusion.
+
+Overall mean predicted probability equalled the observed win rate
+because probabilities sum to one per race and each race has one winner.
+That equality alone does not demonstrate calibration.
+
+No calibration adjustment was applied. The test set remains unevaluated.

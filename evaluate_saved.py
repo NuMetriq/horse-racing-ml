@@ -6,7 +6,7 @@ import numpy as np
 from inspect_data import open_database
 from pathlib import Path
 from race_metrics import evaluate_race_scores
-from feature_transforms import encode_previous_position
+from feature_transforms import encode_previous_position, encode_previous_position_field
 
 
 def main() -> None:
@@ -130,11 +130,7 @@ def main() -> None:
     elif encoding == "previous_position_field_v1":
         X = np.array(
             [
-                (
-                    *row[4:8],
-                    *encode_previous_position(row[8]),
-                    row[9],
-                )
+                encode_previous_position_field(row[4:10])
                 for row in rows
             ],
             dtype=float,

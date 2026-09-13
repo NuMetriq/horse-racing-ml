@@ -21,3 +21,28 @@ def encode_previous_position(value):
         return float(text), 0.0
 
     return np.nan, 1.0
+
+def encode_previous_position_field(row):
+    """Convert six source values into seven numeric model inputs."""
+    (
+        prior_starts,
+        prior_wins,
+        prior_win_rate,
+        days_since_run,
+        previous_position,
+        previous_runner_count,
+    ) = row
+
+    finish_position, result_was_code = encode_previous_position(
+        previous_position
+    )
+
+    return (
+        prior_starts,
+        prior_wins,
+        prior_win_rate,
+        days_since_run,
+        finish_position,
+        result_was_code,
+        previous_runner_count,
+    )

@@ -16,7 +16,7 @@ from sklearn.pipeline import Pipeline
 
 from inspect_data import open_database
 from race_metrics import evaluate_race_scores
-from feature_transforms import encode_previous_position
+from feature_transforms import encode_previous_position, encode_previous_position_field
 
 
 def main() -> None:
@@ -86,11 +86,7 @@ def main() -> None:
 
         X_train = np.array(
             [
-                (
-                    *row[:4],
-                    *encode_previous_position(row[4]),
-                    row[5],
-                )
+                encode_previous_position_field(row[:6])
                 for row in training_rows
             ],
             dtype=float,
@@ -172,11 +168,7 @@ def main() -> None:
 
         X_validation = np.array(
             [
-                (
-                    *row[4:8],
-                    *encode_previous_position(row[8]),
-                    row[9],
-                )
+                encode_previous_position_field(row[4:10])
                 for row in validation_rows
             ],
             dtype=float,

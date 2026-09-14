@@ -1,5 +1,6 @@
 import argparse
 import pickle
+import csv
 
 import numpy as np
 
@@ -15,7 +16,21 @@ def main() -> None:
     )
     parser.add_argument("database", type=Path)
     parser.add_argument("model", type=Path)
+    parser.add_argument(
+        "--predictions-output",
+        type=Path,
+        help="Destination CSV for validation runner predictions",
+    )
+
     args = parser.parse_args()
+
+    if (
+        args.predictions_output is not None
+        and args.predictions_output.exists()
+    ):
+        raise FileExistsError(
+            f"Output already exists: {args.predictions_output}"
+        )
 
     with args.model.open("rb") as file:
         bundle = pickle.load(file)
@@ -233,6 +248,49 @@ def main() -> None:
             f"Model: {group_model_loss:.6f} | "
             f"Uniform: {group_uniform_loss:.6f} | "
             f"Improvement: {group_uniform_loss - group_model_loss:.6f}"
+        )
+
+    if args.predictions_output is not None:
+        output_path = args.predictions_output
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        exported_rows = 0
+
+        with output_path.open(
+            "x", newline="", encoding="utf-8"
+        ) as file:
+            writer = csv.writer(file)
+            writer.writerow(
+                [
+                    "date",
+                    "course",
+                    "off",
+                    "horse",
+                    "win_probability",
+                    "won",
+                ]
+            )
+
+            for race_key, runners in race_scores.items():
+                date, course, off = race_key
+                total_score = sum(score for _, _, score in runners)
+
+                for horse, marker, score in runners:
+                    writer.writerow(
+                        [
+                            date,
+                            course,
+                            off,
+                            horse,
+                            score / total_score,
+                            int(marker == "1"),
+                        ]
+                    )
+                    exported_rows += 1
+
+        print(
+            f"Saved {exported_rows:,} prediction rows to: "
+            f"{output_path.resolve()}"
         )
 
 

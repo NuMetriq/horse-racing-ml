@@ -50,6 +50,16 @@ Expected 2024 validation results:
 Only load trusted pickle files. Use the same package environment
 that created the saved model.
 
+To export validation probabilities for each runner:
+
+```powershell
+python evaluate_saved.py data/processed/v2_features_with_previous_field.db outputs/models/v2_logistic_previous_field.pkl --predictions-output outputs/predictions/v2_logistic_previous_field_validation.csv
+```
+
+The destination must not already exist. The CSV contains race
+identifiers, horse names, race-normalized win probabilities, and
+actual winner indicators. Expected prediction rows: 117,378.
+
 ## Run focused tests
 
 ```powershell

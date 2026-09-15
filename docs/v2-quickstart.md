@@ -66,8 +66,8 @@ actual winner indicators. Expected prediction rows: 117,378.
 python -m unittest test_feature_transforms test_prior_form test_race_metrics
 ```
 
-The reserved test period remains unevaluated.
-See v2-data-notes.md for selection rules, splits, and limitations.
+The first frozen baseline has been evaluated on the reserved test
+period. See v2-data-notes.md for results and evaluation rules.
 
 The model requires feature_transforms.py when training or evaluating.
 It supplies the previous-position encoding and the pipeline's

@@ -21,6 +21,12 @@ def main() -> None:
         type=Path,
         help="Destination CSV for validation runner predictions",
     )
+    parser.add_argument(
+        "--split",
+        choices=("validation", "test"),
+        default="validation",
+        help="Dataset split to evaluate (default: validation)",
+    )
 
     args = parser.parse_args()
 
@@ -155,9 +161,10 @@ def main() -> None:
             SELECT date, course, off, horse,
                    {feature_columns}, won
             FROM features
-            WHERE split = 'validation'
+            WHERE split = ?
             ORDER BY date, course, off, horse
-            """
+            """,
+            (args.split,),
         ).fetchall()
     finally:
         connection.close()
@@ -256,7 +263,7 @@ def main() -> None:
 
     model_loss, uniform_loss = evaluate_race_scores(race_scores)
 
-    print(f"Validation races: {len(race_scores):,}")
+    print(f"{args.split.capitalize()} races: {len(race_scores):,}")
     print(f"Saved-model race log loss: {model_loss:.6f}")
     print(f"Uniform race log loss: {uniform_loss:.6f}")
 

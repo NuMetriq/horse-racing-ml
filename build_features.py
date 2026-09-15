@@ -38,7 +38,7 @@ def save_feature_table(feature_rows, output_path: Path) -> None:
                     previous_runner_count INTEGER,
                     won INTEGER NOT NULL CHECK (won IN (0, 1)),
                     split TEXT NOT NULL
-                        CHECK (split IN ('train', 'validation')),
+                        CHECK (split IN ('train', 'validation', 'test')),
                     PRIMARY KEY (date, course, off, horse)
                 )
                 """
@@ -146,7 +146,6 @@ def main() -> None:
                 ON r.date = races.date
                 AND r.course = races.course
                 AND r.off = races.off
-            WHERE r.date < '2025-01-01'
             ORDER BY r.horse, r.date, r.course, r.off
             """
         )
@@ -154,8 +153,8 @@ def main() -> None:
         horse_count = 0
         feature_count = 0
 
-        split_totals = {"train": 0, "validation": 0}
-        missing_history = {"train": 0, "validation": 0}
+        split_totals = {"train": 0, "validation": 0, "test": 0}
+        missing_history = {"train": 0, "validation": 0, "test": 0}
 
         validation_scores = {}
         validation_history_counts = {}
@@ -185,7 +184,12 @@ def main() -> None:
                 strict=True,
             ):
                 date, course, off, position, starts, wins, rate = feature
-                split = "train" if date < "2024-01-01" else "validation"
+                if date < "2024-01-01":
+                    split = "train"
+                elif date < "2025-01-01":
+                    split = "validation"
+                else:
+                    split = "test"
 
                 feature_rows.append(
                     {
@@ -280,7 +284,7 @@ def main() -> None:
 
         print(f"Horse names processed: {horse_count:,}")
         print(f"Feature rows calculated: {feature_count:,}")
-        for split in ("train", "validation"):
+        for split in ("train", "validation", "test"):
             missing = missing_history[split]
             total = split_totals[split]
             print(

@@ -376,3 +376,42 @@ is weighted by monthly race counts, not an equal average of months.
 The candidate improved mean log loss in every validation month.
 These are descriptive validation findings. The test set remains
 unevaluated.
+
+### First frozen v2 baseline: test evaluation
+
+The relative-finish logistic model was frozen after development on
+training data before 2024 and validation data from 2024.
+
+The unchanged saved model was evaluated on eligible test races from
+2025-01-01 through 2026-05-27, using Kaggle dataset version 118.
+
+| Measure | Result |
+|---|---:|
+| Test races | 15,872 |
+| Test runner rows | 159,207 |
+| Model race log loss | 2.149611 |
+| Uniform race log loss | 2.245443 |
+| Improvement over uniform | 0.095832 |
+
+| Current field size | Races | Model log loss | Uniform log loss | Improvement |
+|---|---:|---:|---:|---:|
+| 2–7 runners | 3,969 | 1.682587 | 1.768776 | 0.086189 |
+| 8–12 runners | 8,285 | 2.179909 | 2.281252 | 0.101343 |
+| 13+ runners | 3,618 | 2.592561 | 2.686354 | 0.093793 |
+
+The model beat uniform in all three field-size groups.
+
+Model parameters and preprocessing remained fixed. Historical
+features used only earlier dates; results from earlier test dates
+could inform features for later test dates. Same-day results were
+excluded.
+
+This establishes performance against a uniform baseline, not
+profitability or superiority to betting-market probabilities.
+
+The test period has now been evaluated. Further development informed
+by these results requires a new untouched period for an independent
+final assessment.
+
+Frozen model:
+outputs/models/v2_logistic_relative_finish_corrected.pkl

@@ -294,3 +294,26 @@ previous_position_field_v1 encoding.
 Validation log loss improved by 0.006080.
 Saved-model evaluation reproduced 2.165894.
 The test set remains unevaluated.
+
+### Paired comparison: adding previous field size
+
+Compared both models on the same 117,378 validation runners across
+11,637 races. Runner identities and winner labels matched.
+
+Improvement is baseline race log loss minus candidate race log loss.
+Positive values favor the model with previous runner count.
+
+| Measure | Result |
+|---|---:|
+| Baseline mean race log loss | 2.171974 |
+| Candidate mean race log loss | 2.165894 |
+| Mean improvement, calculated before rounding | 0.006081 |
+| Median improvement | 0.004193 |
+| Races improved | 6,297 |
+| Races worsened | 5,192 |
+| Races effectively unchanged | 148 |
+
+The positive median and improvement in 54.1% of races indicate
+that gains were not confined to a small number of races.
+These are descriptive validation results, not a significance test.
+The reserved test set remains unevaluated.

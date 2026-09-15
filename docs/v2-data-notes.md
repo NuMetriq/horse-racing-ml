@@ -348,3 +348,31 @@ Verified artifacts:
 
 The original relative-finish artifacts had an incorrect encoding
 label and are superseded by these corrected artifacts.
+
+### Monthly validation comparison: relative finish
+
+Compared the previous-field model (baseline) with the relative-finish
+model (candidate) on identical races within each month.
+
+| Month | Races | Baseline log loss | Candidate log loss | Improvement |
+|---|---:|---:|---:|---:|
+| 2024-01 | 667 | 2.159586 | 2.154240 | 0.005346 |
+| 2024-02 | 654 | 2.129737 | 2.125943 | 0.003794 |
+| 2024-03 | 760 | 2.184486 | 2.179418 | 0.005068 |
+| 2024-04 | 909 | 2.188207 | 2.185192 | 0.003016 |
+| 2024-05 | 1,227 | 2.151848 | 2.145659 | 0.006190 |
+| 2024-06 | 1,224 | 2.160143 | 2.151185 | 0.008958 |
+| 2024-07 | 1,152 | 2.136321 | 2.127814 | 0.008507 |
+| 2024-08 | 1,206 | 2.105682 | 2.098880 | 0.006802 |
+| 2024-09 | 1,213 | 2.146502 | 2.141356 | 0.005146 |
+| 2024-10 | 1,185 | 2.202920 | 2.199546 | 0.003374 |
+| 2024-11 | 780 | 2.222891 | 2.217878 | 0.005013 |
+| 2024-12 | 660 | 2.256171 | 2.250678 | 0.005493 |
+
+Positive improvement favors the candidate. Differences are calculated
+before rounding. Each race receives equal weight; the overall result
+is weighted by monthly race counts, not an equal average of months.
+
+The candidate improved mean log loss in every validation month.
+These are descriptive validation findings. The test set remains
+unevaluated.

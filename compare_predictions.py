@@ -108,6 +108,33 @@ def main():
     print(f"Races worsened: {worsened:,}")
     print(f"Races effectively unchanged: {unchanged:,}")
 
+    monthly_losses = {}
+
+    for race_key in sorted(race_keys):
+        month = race_key[0][:7]
+        monthly_losses.setdefault(month, []).append(
+            (
+                baseline_losses[race_key],
+                candidate_losses[race_key],
+            )
+        )
+
+    print("\nMonthly comparison:")
+
+    for month, losses in sorted(monthly_losses.items()):
+        baseline_mean = mean(pair[0] for pair in losses)
+        candidate_mean = mean(pair[1] for pair in losses)
+        improvement = mean(
+            baseline_loss - candidate_loss
+            for baseline_loss, candidate_loss in losses
+        )
+
+        print(
+            f"{month} | Races: {len(losses):,} | "
+            f"Baseline: {baseline_mean:.6f} | "
+            f"Candidate: {candidate_mean:.6f} | "
+            f"Improvement: {improvement:+.6f}"
+        )
 
 if __name__ == "__main__":
     main()

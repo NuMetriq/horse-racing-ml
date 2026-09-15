@@ -31,7 +31,7 @@ reusing existing files from the same dataset version and preparation rules.
 ## Train and save
 
 ```powershell
-python train_logistic.py data/processed/v2_features_with_previous_field.db --model-output outputs/models/v2_logistic_previous_field.pkl
+python train_logistic.py data/processed/v2_features_with_previous_field.db --model-output outputs/models/v2_logistic_relative_finish_corrected.pkl
 ```
 
 The model-output path must not already exist.
@@ -39,12 +39,12 @@ The model-output path must not already exist.
 ## Evaluate without retraining
 
 ```powershell
-python evaluate_saved.py data/processed/v2_features_with_previous_field.db outputs/models/v2_logistic_previous_field.pkl
+python evaluate_saved.py data/processed/v2_features_with_previous_field.db outputs/models/v2_logistic_relative_finish_corrected.pkl
 ```
 
 Expected 2024 validation results:
 - Races: 11,637
-- Logistic race log loss: 2.165894
+- Logistic race log loss: 2.160138
 - Uniform race log loss: 2.253199
 
 Only load trusted pickle files. Use the same package environment
@@ -53,7 +53,7 @@ that created the saved model.
 To export validation probabilities for each runner:
 
 ```powershell
-python evaluate_saved.py data/processed/v2_features_with_previous_field.db outputs/models/v2_logistic_previous_field.pkl --predictions-output outputs/predictions/v2_logistic_previous_field_validation.csv
+python evaluate_saved.py data/processed/v2_features_with_previous_field.db outputs/models/v2_logistic_relative_finish_corrected.pkl --predictions-output outputs/predictions/v2_logistic_relative_finish_validation.csv
 ```
 
 The destination must not already exist. The CSV contains race
@@ -63,7 +63,7 @@ actual winner indicators. Expected prediction rows: 117,378.
 ## Run focused tests
 
 ```powershell
-python -m unittest test_prior_form test_race_metrics
+python -m unittest test_feature_transforms test_prior_form test_race_metrics
 ```
 
 The reserved test period remains unevaluated.
@@ -78,14 +78,14 @@ logarithmic gap transformation.
 After exporting both models' validation predictions, run:
 
 ```powershell
-python compare_predictions.py outputs/predictions/v2_logistic_previous_position_validation.csv outputs/predictions/v2_logistic_previous_field_validation.csv
+python compare_predictions.py outputs/predictions/v2_logistic_previous_field_validation.csv outputs/predictions/v2_logistic_relative_finish_validation.csv
 ```
 
 The first file is the baseline; the second is the candidate.
 Both must contain the same runners and winner labels.
 
 Expected matched races: 11,637.
-Expected mean improvement: 0.006081.
+Expected mean improvement: 0.005756.
 
 Positive improvement means the candidate assigned a higher
 probability to the recorded winner.

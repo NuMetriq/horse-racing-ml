@@ -72,3 +72,20 @@ See v2-data-notes.md for selection rules, splits, and limitations.
 The model requires feature_transforms.py when training or evaluating.
 It supplies the previous-position encoding and the pipeline's
 logarithmic gap transformation.
+
+## Compare prediction exports
+
+After exporting both models' validation predictions, run:
+
+```powershell
+python compare_predictions.py outputs/predictions/v2_logistic_previous_position_validation.csv outputs/predictions/v2_logistic_previous_field_validation.csv
+```
+
+The first file is the baseline; the second is the candidate.
+Both must contain the same runners and winner labels.
+
+Expected matched races: 11,637.
+Expected mean improvement: 0.006081.
+
+Positive improvement means the candidate assigned a higher
+probability to the recorded winner.

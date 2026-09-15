@@ -16,7 +16,7 @@ from sklearn.pipeline import Pipeline
 
 from inspect_data import open_database
 from race_metrics import evaluate_race_scores
-from feature_transforms import encode_previous_position, encode_previous_position_field
+from feature_transforms import encode_previous_position, encode_previous_position_field, encode_previous_relative_finish
 
 
 def main() -> None:
@@ -86,7 +86,7 @@ def main() -> None:
 
         X_train = np.array(
             [
-                encode_previous_position_field(row[:6])
+                encode_previous_relative_finish(row[:6])
                 for row in training_rows
             ],
             dtype=float,
@@ -142,10 +142,12 @@ def main() -> None:
             "previous_finish_position",
             "previous_result_was_code",
             "previous_runner_count",
+            "previous_relative_finish",
             "missing_win_rate",
             "missing_days_since_run",
             "missing_previous_finish_position",
             "missing_previous_runner_count",
+            "missing_previous_relative_finish",
         ]
 
         print(f"Iterations used: {model.n_iter_[0]}")
@@ -168,7 +170,7 @@ def main() -> None:
 
         X_validation = np.array(
             [
-                encode_previous_position_field(row[4:10])
+                encode_previous_relative_finish(row[4:10])
                 for row in validation_rows
             ],
             dtype=float,
@@ -229,7 +231,7 @@ def main() -> None:
                 "model_log_loss": model_loss,
                 "uniform_log_loss": uniform_loss,
                 "improvement": uniform_loss - model_loss,
-                "input_encoding": "previous_position_v1",
+                "input_encoding": "previous_relative_finish_v1",
             }
 
             args.report.parent.mkdir(parents=True, exist_ok=True)
@@ -259,8 +261,9 @@ def main() -> None:
                     "previous_finish_position",
                     "previous_result_was_code",
                     "previous_runner_count",
+                    "previous_relative_finish",
                 ],
-                "input_encoding": "previous_position_field_v1",
+                "input_encoding": "previous_relative_finish_v1",
                 "history_window_days": None,
                 "training_end_exclusive": "2024-01-01",
                 "sklearn_version": sklearn.__version__,

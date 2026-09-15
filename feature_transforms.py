@@ -46,3 +46,33 @@ def encode_previous_position_field(row):
         result_was_code,
         previous_runner_count,
     )
+
+def calculate_relative_finish(position, runner_count):
+    """Scale a valid finishing position from 0 (first) to 1 (last)."""
+    numeric_position, _ = encode_previous_position(position)
+
+    if runner_count is None:
+        return np.nan
+
+    try:
+        count = float(runner_count)
+    except (TypeError, ValueError):
+        return np.nan
+
+    if (
+        not np.isfinite(numeric_position)
+        or not np.isfinite(count)
+        or not count.is_integer()
+        or count < 2
+        or not 1 <= numeric_position <= count
+    ):
+        return np.nan
+
+    return (numeric_position - 1) / (count - 1)
+
+def encode_previous_relative_finish(row):
+    """Keep the seven existing inputs and append relative finish."""
+    existing_inputs = encode_previous_position_field(row)
+    relative_finish = calculate_relative_finish(row[4], row[5])
+
+    return (*existing_inputs, relative_finish)

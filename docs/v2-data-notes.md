@@ -317,3 +317,34 @@ The positive median and improvement in 54.1% of races indicate
 that gains were not confined to a small number of races.
 These are descriptive validation results, not a significance test.
 The reserved test set remains unevaluated.
+
+### Previous relative finish
+
+Added (previous_position - 1) / (previous_runner_count - 1)
+alongside the existing position and field-size inputs.
+
+The value is 0 for first place and 1 when position equals runner
+count. Missing positions, result codes, and invalid combinations
+produce a missing value.
+
+| Measure | Result |
+|---|---:|
+| Baseline race log loss | 2.165894 |
+| Relative-finish race log loss | 2.160138 |
+| Mean paired improvement | 0.005756 |
+| Median paired improvement | 0.005967 |
+| Races improved | 6,323 |
+| Races worsened | 5,166 |
+| Races effectively unchanged | 148 |
+
+Saved-model evaluation reproduced 2.160138 and exported 117,378
+validation predictions. The test set remains unevaluated.
+
+Encoding: previous_relative_finish_v1.
+
+Verified artifacts:
+- Model: outputs/models/v2_logistic_relative_finish_corrected.pkl
+- Report: outputs/reports/v2_logistic_relative_finish_corrected.json
+
+The original relative-finish artifacts had an incorrect encoding
+label and are superseded by these corrected artifacts.

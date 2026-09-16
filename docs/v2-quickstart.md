@@ -89,3 +89,20 @@ Expected mean improvement: 0.005756.
 
 Positive improvement means the candidate assigned a higher
 probability to the recorded winner.
+
+## Predict one historical race
+
+```powershell
+python predict_race.py data/processed/v2_features_all_splits.db outputs/models/v2_logistic_relative_finish_corrected.pkl --date 2024-01-01 --course "Ascot (AUS)" --off "7:50"
+```
+
+Requires the all-splits feature database. The script loads prepared
+historical features and applies the frozen model without reading the
+selected race's outcome.
+
+Probabilities sum to one within the race. Horses with identical
+inputs receive identical predictions; ordering within a tie does
+not indicate preference.
+
+This predicts an existing race from prepared features. It does not
+yet construct features for upcoming racecards.

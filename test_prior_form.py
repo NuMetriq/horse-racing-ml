@@ -6,6 +6,7 @@ from prior_form import (
     calculate_days_since_run,
     calculate_previous_position,
     calculate_previous_runner_count,
+    calculate_features_as_of,
 )
 
 
@@ -83,6 +84,54 @@ class PriorFormTests(unittest.TestCase):
         )
 
         self.assertEqual(actual, [None, 6, 6, None, 8])
+
+    def test_features_as_of_excludes_same_day_and_future(self):
+        history = [
+            ("2024-01-01", "Course A", "1:00", "1"),
+            ("2024-01-10", "Course A", "2:00", "5"),
+            ("2024-01-20", "Course A", "1:00", "1"),
+            ("2024-02-01", "Course A", "1:00", "1"),
+        ]
+        runner_counts = [8, 12, 6, 10]
+
+        actual = calculate_features_as_of(
+            history, runner_counts, "2024-01-20"
+        )
+
+        self.assertEqual(
+            actual,
+            {
+                "prior_starts": 2,
+                "prior_wins": 1,
+                "prior_win_rate": 0.5,
+                "days_since_run": 10,
+                "previous_position": "5",
+                "previous_runner_count": 12,
+            },
+        )
+
+    def test_features_as_of_without_earlier_history(self):
+        history = [
+            ("2024-01-20", "Course A", "1:00", "1"),
+            ("2024-02-01", "Course A", "1:00", "2"),
+        ]
+        runner_counts = [8, 10]
+
+        actual = calculate_features_as_of(
+            history, runner_counts, "2024-01-20"
+        )
+
+        self.assertEqual(
+            actual,
+            {
+                "prior_starts": 0,
+                "prior_wins": 0,
+                "prior_win_rate": None,
+                "days_since_run": None,
+                "previous_position": None,
+                "previous_runner_count": None,
+            },
+        )
 
 if __name__ == "__main__":
     unittest.main()

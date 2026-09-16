@@ -140,3 +140,37 @@ def calculate_previous_runner_count(history, runner_counts):
             previous_count = None
 
     return counts
+
+def calculate_features_as_of(history, runner_counts, race_date):
+    """Build one horse's source features using dates before race_date."""
+    calendar_date.fromisoformat(race_date)
+
+    earlier_records = [
+        (record, count)
+        for record, count in zip(history, runner_counts, strict=True)
+        if record[0] < race_date
+    ]
+    earlier_records.sort(key=lambda pair: pair[0][:3])
+
+    earlier_history = [record for record, _ in earlier_records]
+    earlier_counts = [count for _, count in earlier_records]
+
+    # Temporary row used only to request features for the target date.
+    target_history = earlier_history + [(race_date, "", "", None)]
+    target_counts = earlier_counts + [None]
+
+    form = calculate_prior_form(target_history)[-1]
+    gap = calculate_days_since_run(target_history)[-1]
+    position = calculate_previous_position(target_history)[-1]
+    runner_count = calculate_previous_runner_count(
+        target_history, target_counts
+    )[-1]
+
+    return {
+        "prior_starts": form[4],
+        "prior_wins": form[5],
+        "prior_win_rate": form[6],
+        "days_since_run": gap,
+        "previous_position": position,
+        "previous_runner_count": runner_count,
+    }

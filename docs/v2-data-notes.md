@@ -433,3 +433,18 @@ The supplied list must contain the complete race field. The script
 does not verify racecard completeness or download current racecards.
 History freshness depends on the supplied database; the current
 version-118 snapshot ends on 2026-05-27.
+
+### Fresh-environment verification
+
+Created a separate Python 3.11 environment and installed
+requirements-v2.txt.
+
+- All ten focused unit tests passed.
+- The existing frozen model loaded successfully.
+- The ten-runner Ascot example reproduced the displayed probabilities.
+- Probabilities summed to one, with seven runners lacking prior history.
+- No warnings appeared in the prediction output.
+
+This verified dependency installation, focused tests, and saved-model
+prediction using existing artifacts. It did not repeat data preparation
+or model training from scratch.

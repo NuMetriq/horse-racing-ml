@@ -2,12 +2,23 @@
 
 Run commands from the repository’s top folder in PowerShell.
 
-## Activate the environment
+## Create and activate the environment
+
+Use Python 3.11. From the repository's top folder, create the
+environment once:
+
+```powershell
+py -3.11 -m venv .venv-v2
+```
+
+Activate it and install dependencies:
 
 ```powershell
 .\.venv-v2\Scripts\Activate.ps1
 python -m pip install -r requirements-v2.txt
 ```
+
+Skip environment creation if .venv-v2 already exists.
 
 ## Download source data
 
@@ -36,15 +47,18 @@ Use Kaggle dataset version 118 for the documented results.
 Set this variable to the downloaded raceform.db file:
 
 ```powershell
-$rawDatabase = "C:\Users\Owner\.cache\kagglehub\datasets\deltaromeo\horse-racing-results-ukireland-2015-2025\versions\118\form_2015-present\form_2015-present\raceform.db"
+$rawDatabase = Join-Path $env:USERPROFILE ".cache\kagglehub\datasets\deltaromeo\horse-racing-results-ukireland-2015-2025\versions\118\form_2015-present\form_2015-present\raceform.db"
 ```
 
 Create the prepared dataset and all-history features:
 
 ```powershell
 python prepare_data.py $rawDatabase --output data/processed/v2_flat_competitive.db
-python build_features.py data/processed/v2_flat_competitive.db --alpha 30 --features-output data/processed/v2_features_with_previous_field.db
+python build_features.py data/processed/v2_flat_competitive.db --alpha 30 --features-output data/processed/v2_features_all_splits.db
 ```
+
+This creates 1,265,658 feature rows across train, validation, and test.
+Training selects only training rows; evaluation defaults to validation.
 
 These commands require new output paths. Skip completed exports when
 reusing existing files from the same dataset version and preparation rules.
@@ -52,7 +66,7 @@ reusing existing files from the same dataset version and preparation rules.
 ## Train and save
 
 ```powershell
-python train_logistic.py data/processed/v2_features_with_previous_field.db --model-output outputs/models/v2_logistic_relative_finish_corrected.pkl
+python train_logistic.py data/processed/v2_features_all_splits.db --model-output outputs/models/v2_logistic_relative_finish_corrected.pkl
 ```
 
 The model-output path must not already exist.
@@ -60,7 +74,7 @@ The model-output path must not already exist.
 ## Evaluate without retraining
 
 ```powershell
-python evaluate_saved.py data/processed/v2_features_with_previous_field.db outputs/models/v2_logistic_relative_finish_corrected.pkl
+python evaluate_saved.py data/processed/v2_features_all_splits.db outputs/models/v2_logistic_relative_finish_corrected.pkl
 ```
 
 Expected 2024 validation results:
@@ -74,7 +88,7 @@ that created the saved model.
 To export validation probabilities for each runner:
 
 ```powershell
-python evaluate_saved.py data/processed/v2_features_with_previous_field.db outputs/models/v2_logistic_relative_finish_corrected.pkl --predictions-output outputs/predictions/v2_logistic_relative_finish_validation.csv
+python evaluate_saved.py data/processed/v2_features_all_splits.db outputs/models/v2_logistic_relative_finish_corrected.pkl --predictions-output outputs/predictions/v2_logistic_relative_finish_validation.csv
 ```
 
 The destination must not already exist. The CSV contains race
@@ -94,7 +108,12 @@ The model requires feature_transforms.py when training or evaluating.
 It supplies the previous-position encoding and the pipeline's
 logarithmic gap transformation.
 
-## Compare prediction exports
+## Compare prediction exports (OPTIONAL)
+
+This optional comparison requires the archived previous-field model's
+validation export, v2_logistic_previous_field_validation.csv.
+The current training command does not recreate that earlier model.
+Skip this section on a fresh setup unless that export is available.
 
 After exporting both models' validation predictions, run:
 
@@ -153,3 +172,15 @@ python predict_racecard.py data/processed/v2_flat_competitive.db outputs/models/
 The report destination must not already exist. The report includes
 full-precision probabilities, each runner's source features, history
 coverage, and the model and database paths.
+
+## Reproduce the recorded test evaluation
+
+The test period has already been evaluated for this frozen baseline.
+Rerunning it reproduces that assessment; it is not a new holdout.
+
+```powershell
+python evaluate_saved.py data/processed/v2_features_all_splits.db outputs/models/v2_logistic_relative_finish_corrected.pkl --split test
+```
+
+Expected: 15,872 races, model log loss 2.149611, and uniform
+log loss 2.245443.

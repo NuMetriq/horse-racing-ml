@@ -415,3 +415,21 @@ final assessment.
 
 Frozen model:
 outputs/models/v2_logistic_relative_finish_corrected.pkl
+
+### Prediction from a supplied runner list
+
+predict_racecard.py accepts a race date and repeated --horse arguments.
+It builds all-history features from the prepared race database using
+only records dated strictly before the target date.
+
+For the ten-runner Ascot (AUS) example on 2024-01-01, predictions
+matched the prepared-feature prediction at displayed precision.
+Race probabilities summed to one.
+
+Horse names must match the historical dataset exactly. No matching
+earlier history does not establish that a horse is a debutant.
+
+The supplied list must contain the complete race field. The script
+does not verify racecard completeness or download current racecards.
+History freshness depends on the supplied database; the current
+version-118 snapshot ends on 2026-05-27.

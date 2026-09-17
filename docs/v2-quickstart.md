@@ -106,3 +106,19 @@ not indicate preference.
 
 This predicts an existing race from prepared features. It does not
 yet construct features for upcoming racecards.
+
+## Predict from a runner-list file
+
+Supply a UTF-8 text file with one exact horse name per line.
+Blank lines are ignored; duplicate names are rejected.
+Use either --runners-file or repeated --horse arguments, not both.
+
+Historical example:
+
+```powershell
+python predict_racecard.py data/processed/v2_flat_competitive.db outputs/models/v2_logistic_relative_finish_corrected.pkl --date 2024-01-01 --runners-file examples/ascot_2024-01-01_0750.txt
+```
+
+Expected: 10 runners, with probabilities summing to one.
+The list must include the complete race field. Historical features
+use only records dated before the supplied race date.

@@ -16,16 +16,36 @@ def main():
     parser.add_argument("history_database", type=Path)
     parser.add_argument("model", type=Path)
     parser.add_argument("--date", required=True)
-    parser.add_argument(
+
+    runner_source = parser.add_mutually_exclusive_group(required=True)
+    runner_source.add_argument(
         "--horse",
         action="append",
-        required=True,
         help="Exact horse name; repeat for every runner",
     )
+    runner_source.add_argument(
+        "--runners-file",
+        type=Path,
+        help="UTF-8 text file containing one horse name per line",
+    )
+
     args = parser.parse_args()
 
     race_date = date.fromisoformat(args.date).isoformat()
-    horses = [horse.strip() for horse in args.horse]
+
+    if args.runners_file is not None:
+        try:
+            text = args.runners_file.read_text(encoding="utf-8-sig")
+        except (OSError, UnicodeError) as error:
+            parser.error(f"Cannot read runners file: {error}")
+
+        horses = [
+            line.strip()
+            for line in text.splitlines()
+            if line.strip()
+        ]
+    else:
+        horses = [horse.strip() for horse in args.horse]
 
     if any(not horse for horse in horses):
         parser.error("Horse names must not be blank")

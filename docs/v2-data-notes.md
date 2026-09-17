@@ -448,3 +448,30 @@ requirements-v2.txt.
 This verified dependency installation, focused tests, and saved-model
 prediction using existing artifacts. It did not repeat data preparation
 or model training from scratch.
+
+### Exploratory market comparison
+
+Compared the frozen relative-finish model with normalized inverse BSP:
+
+market_probability = (1 / BSP) / sum(1 / BSP within race)
+
+Coverage: 2026-03-01 through 2026-04-29.
+
+Of 1,679 prepared races, 1 lacked market rows and 264 had all
+market rows but at least one missing or invalid BSP. Both predictors
+were evaluated on the remaining complete-field subset.
+
+| Measure | Result |
+|---|---:|
+| Matched races | 1,414 |
+| Matched runners | 13,960 |
+| Frozen-model race log loss | 2.162298 |
+| Normalized-BSP race log loss | 1.851936 |
+| Model improvement over BSP | -0.310362 |
+
+Normalized BSP substantially outperformed the model in average
+race log loss. No betting profitability or subset advantage has
+been established.
+
+This comparison uses an already examined test period and is
+exploratory. Final BSP is not assumed available before the start.

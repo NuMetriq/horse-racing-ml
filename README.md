@@ -1,12 +1,86 @@
-# Horse Racing Outcome Prediction (v1.2.0-dev)
+# Horse Racing Outcome Prediction
 
-Leakage-safe, time-aware ML pipeline for predicting horse race outcomes using historical UK & Ireland racing data — with an explicit focus on **calibration**, **race-aware ranking quality**, and **methodological correctness**.
+A step-by-step rebuild of a horse-racing prediction workflow, with
+chronological feature construction, race-level evaluation, and
+prediction from supplied runner lists.
 
-See `CHANGELOG.md` for a detailed history of releases and validation steps.
+## Start here: v2 baseline
 
-> **Non-goal:** This repo is not betting advice and does not attempt to optimize profitability.
+The current rebuild is on the `v2-rebuild-master` branch.
+
+- [V2 quickstart](docs/v2-quickstart.md): setup, data preparation,
+  training, evaluation, and prediction commands.
+- [V2 data notes](docs/v2-data-notes.md): selection rules, experiments,
+  results, and limitations.
+
+V2 uses logistic regression with historical horse-form features:
+prior starts and wins, prior win rate, days since the previous run,
+previous finishing position, previous field size, and relative finish.
+
+The pipeline applies a logarithmic gap transformation, imputes missing
+values with indicators, and scales inputs. Predicted runner scores
+are normalized to sum to one within each race.
+
+Historical features use records from strictly earlier dates.
+Earlier test-period results may inform later test-period features;
+the fitted model remains unchanged.
+
+## Data and scope
+
+The frozen baseline uses version 118 of the Kaggle dataset
+[Horse Racing Results](https://www.kaggle.com/datasets/deltaromeo/horse-racing-results-ukireland-2015-2025).
+
+Despite the dataset title, its records include international courses.
+The prepared subset contains flat races with at least two runners,
+one recorded winner, and runner counts matching the reported field size.
+Dead heats and incomplete or inconsistent race groups are excluded.
+
+| Split | Dates | Races | Runners |
+|---|---|---:|---:|
+| Training | 2015–2023 | 98,625 | 989,073 |
+| Validation | 2024 | 11,637 | 117,378 |
+| Test | 2025-01-01 through 2026-05-27 | 15,872 | 159,207 |
+
+## Frozen baseline results
+
+Race log loss is the mean negative natural logarithm of the
+probability assigned to each race's winner. Lower is better.
+
+| Evaluation period | Model race log loss | Uniform race log loss |
+|---|---:|---:|
+| Validation | 2.160138 | 2.253199 |
+| Test | 2.149611 | 2.245443 |
+
+The model was selected using validation results and then evaluated
+unchanged on the test period. That test period has now been used.
+
+These results establish improvement over uniform probabilities.
+They do not establish profitability or superiority to market odds.
+
+## Prediction workflow
+
+V2 can predict an existing race from prepared features or construct
+features for a supplied date and runner list using earlier history.
+Predictions can be saved as JSON with source features and coverage details.
+
+Runner lists must contain the complete field and exact horse names.
+Missing history may reflect incomplete coverage or a name mismatch,
+rather than a horse's debut. The version-118 snapshot ends on 2026-05-27.
+
+See the quickstart for the root-level Python scripts and
+`requirements-v2.txt`. Generated databases and model files remain local.
 
 ---
+
+## Legacy v1 documentation
+
+Everything below describes the earlier v1 implementation, not the
+current v2 workflow. Its feature-availability claims and reported
+metrics have not been revalidated as part of this rebuild.
+Do not compare its scores directly with the v2 results above.
+
+The pre-rebuild work is preserved on `archive/pre-rebuild-work`
+and under the `pre-v2-rebuild` tag.
 
 ## Overview
 

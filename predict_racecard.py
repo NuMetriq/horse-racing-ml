@@ -71,6 +71,11 @@ def main():
     connection = open_database(args.history_database.resolve())
 
     try:
+        history_latest_date = connection.execute(
+            "SELECT MAX(date) FROM runners"
+        ).fetchone()[0]
+
+        print(f"Latest recorded date in history database: {history_latest_date}")
         for horse in horses:
             rows = connection.execute(
                 """
@@ -199,6 +204,7 @@ def main():
             "history_database": str(args.history_database.resolve()),
             "input_encoding": bundle["input_encoding"],
             "history_window_days": bundle["history_window_days"],
+            "history_latest_date": history_latest_date,
             "runner_count": len(horses),
             "runners_without_history": missing_history_count,
             "probability_normalization": "divide by race total",

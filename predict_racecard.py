@@ -1,4 +1,5 @@
 import argparse
+import json
 from datetime import date
 from pathlib import Path
 import pickle
@@ -28,8 +29,15 @@ def main():
         type=Path,
         help="UTF-8 text file containing one horse name per line",
     )
+    parser.add_argument(
+        "--report",
+        type=Path,
+        help="Save prediction details to a new JSON file",
+    )
 
     args = parser.parse_args()
+    if args.report is not None and args.report.exists():
+        parser.error(f"Report already exists: {args.report}")
 
     race_date = date.fromisoformat(args.date).isoformat()
 
@@ -183,6 +191,34 @@ def main():
         print(f"{horse} | {probability:.2%}")
 
     print(f"Probability total: {probabilities.sum():.6f}")
+
+    if args.report is not None:
+        report = {
+            "race_date": race_date,
+            "model_path": str(args.model.resolve()),
+            "history_database": str(args.history_database.resolve()),
+            "input_encoding": bundle["input_encoding"],
+            "history_window_days": bundle["history_window_days"],
+            "runner_count": len(horses),
+            "runners_without_history": missing_history_count,
+            "probability_normalization": "divide by race total",
+            "predictions": [
+                {
+                    "horse": horse,
+                    "win_probability": float(probability),
+                    "source_features": features_by_horse[horse],
+                }
+                for horse, probability in ranked_runners
+            ],
+        }
+
+        args.report.parent.mkdir(parents=True, exist_ok=True)
+
+        with args.report.open("x", encoding="utf-8") as file:
+            json.dump(report, file, indent=2, allow_nan=False)
+            file.write("\n")
+
+        print(f"Report saved to: {args.report.resolve()}")
 
 
 if __name__ == "__main__":

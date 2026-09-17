@@ -122,3 +122,13 @@ python predict_racecard.py data/processed/v2_flat_competitive.db outputs/models/
 Expected: 10 runners, with probabilities summing to one.
 The list must include the complete race field. Historical features
 use only records dated before the supplied race date.
+
+To save a JSON prediction report, add --report:
+
+```powershell
+python predict_racecard.py data/processed/v2_flat_competitive.db outputs/models/v2_logistic_relative_finish_corrected.pkl --date 2024-01-01 --runners-file examples/ascot_2024-01-01_0750.txt --report outputs/predictions/ascot_2024-01-01_0750.json
+```
+
+The report destination must not already exist. The report includes
+full-precision probabilities, each runner's source features, history
+coverage, and the model and database paths.

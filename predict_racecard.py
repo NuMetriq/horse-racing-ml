@@ -97,6 +97,17 @@ def main():
     finally:
         connection.close()
 
+    missing_history_count = sum(
+        features["prior_starts"] == 0
+        for features in features_by_horse.values()
+    )
+
+    print(
+        f"\nRunners without earlier recorded history: "
+        f"{missing_history_count} of {len(horses)} "
+        f"({missing_history_count / len(horses):.1%})"
+    )
+
     with args.model.open("rb") as file:
         bundle = pickle.load(file)
 

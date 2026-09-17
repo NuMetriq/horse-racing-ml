@@ -9,6 +9,27 @@ Run commands from the repository’s top folder in PowerShell.
 python -m pip install -r requirements-v2.txt
 ```
 
+## Download source data
+
+To reproduce the dataset version used for the frozen baseline:
+
+```powershell
+python download_data.py --version 118
+```
+
+To request the latest available version:
+
+```powershell
+python download_data.py
+```
+
+The script prints the downloaded or cached dataset directory.
+Downloading does not rebuild prepared databases or retrain the model.
+
+The frozen baseline used version 118, with recorded results through
+2026-05-27. Preserve its prepared databases when refreshing history.
+Prepare any newer version into a separate output database.
+
 ## Prepare the data
 
 Use Kaggle dataset version 118 for the documented results.

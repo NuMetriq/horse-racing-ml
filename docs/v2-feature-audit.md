@@ -262,3 +262,59 @@ Artifacts:
 
 \- Encoding: relative\_finish\_age\_v1
 
+
+
+\### Age: chronological development comparison
+
+
+
+Each model was fitted on data from 2015 through the year before
+
+evaluation. Both feature sets used identical training and evaluation
+
+rows, preprocessing rules, and logistic regression settings.
+
+
+
+| Evaluation year | Training years | Without age | With age | Log-loss improvement |
+
+|---|---|---:|---:|---:|
+
+| 2021 | 2015–2020 | 2.137236 | 2.135275 | +0.001961 |
+
+| 2022 | 2015–2021 | 2.131581 | 2.129857 | +0.001724 |
+
+| 2023 | 2015–2022 | 2.154748 | 2.153240 | +0.001508 |
+
+| 2024 | 2015–2023 | 2.160138 | 2.157301 | +0.002837 |
+
+
+
+Lower race log loss is better. Improvement is calculated as
+
+without-age loss minus with-age loss.
+
+
+
+Age improved performance in all four evaluation years. Retain age
+
+as a model input. The gains are small, and statistical uncertainty
+
+has not yet been quantified.
+
+
+
+These are development comparisons: feature design was already
+
+informed by the existing data and earlier experiments. They are
+
+not independent confirmation on an untouched holdout.
+
+
+
+Model parameters remained fixed within each evaluation year.
+
+Earlier race results could contribute to features for later dates,
+
+with same-day and future results excluded from horse history.
+

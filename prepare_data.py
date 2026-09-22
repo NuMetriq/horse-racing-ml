@@ -57,6 +57,7 @@ def export_races(
                     off TEXT NOT NULL,
                     horse TEXT NOT NULL,
                     finish_position TEXT,
+                    age INTEGER,
                     PRIMARY KEY (date, course, off, horse),
                     FOREIGN KEY (date, course, off)
                         REFERENCES races (date, course, off)
@@ -72,7 +73,7 @@ def export_races(
 
             source_runners = source.execute(
                 """
-                SELECT date, course, off, horse, CAST(pos AS TEXT)
+                SELECT date, course, off, horse, CAST(pos AS TEXT), age
                 FROM data
                 WHERE type = 'Flat'
                 """
@@ -81,8 +82,8 @@ def export_races(
             destination.executemany(
                 """
                 INSERT INTO runners
-                    (date, course, off, horse, finish_position)
-                VALUES (?, ?, ?, ?, ?)
+                    (date, course, off, horse, finish_position, age)
+                VALUES (?, ?, ?, ?, ?, ?)
                 """,
                 (
                     row

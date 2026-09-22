@@ -36,6 +36,7 @@ def save_feature_table(feature_rows, output_path: Path) -> None:
                     days_since_run INTEGER,
                     previous_position TEXT,
                     previous_runner_count INTEGER,
+                    age INTEGER,
                     won INTEGER NOT NULL CHECK (won IN (0, 1)),
                     split TEXT NOT NULL
                         CHECK (split IN ('train', 'validation', 'test')),
@@ -49,12 +50,14 @@ def save_feature_table(feature_rows, output_path: Path) -> None:
                 INSERT INTO features (
                     date, course, off, horse,
                     prior_starts, prior_wins, prior_win_rate,
-                    days_since_run, previous_position, previous_runner_count, won, split
+                    days_since_run, previous_position,
+                    previous_runner_count, age, won, split
                 )
                 VALUES (
                     :date, :course, :off, :horse,
                     :prior_starts, :prior_wins, :prior_win_rate,
-                    :days_since_run, :previous_position, :previous_runner_count, :won, :split
+                    :days_since_run, :previous_position,
+                    :previous_runner_count, :age, :won, :split
                 )
                 """,
                 feature_rows,
@@ -140,7 +143,7 @@ def main() -> None:
             """
             SELECT
                 r.horse, r.date, r.course, r.off,
-                r.finish_position, races.runner_count
+                r.finish_position, races.runner_count, r.age
             FROM runners AS r
             JOIN races
                 ON r.date = races.date
@@ -164,6 +167,7 @@ def main() -> None:
             horse_rows = list(records)
             history = [row[1:5] for row in horse_rows]
             runner_counts = [row[5] for row in horse_rows]
+            ages = [row[6] for row in horse_rows]
             previous_runner_counts = calculate_previous_runner_count(
                 history, runner_counts
             )
@@ -176,11 +180,12 @@ def main() -> None:
                     history, window_days=args.window_days
                 )
 
-            for feature, gap, previous_position, previous_runner_count in zip(
+            for feature, gap, previous_position, previous_runner_count, age in zip(
                 features,
                 gaps,
                 previous_positions,
                 previous_runner_counts,
+                ages,
                 strict=True,
             ):
                 date, course, off, position, starts, wins, rate = feature
@@ -205,6 +210,7 @@ def main() -> None:
                         "days_since_run": gap,
                         "previous_position": previous_position,
                         "previous_runner_count": previous_runner_count,
+                        "age": age,
                     }
                 )
 

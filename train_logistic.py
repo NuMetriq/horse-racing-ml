@@ -16,7 +16,7 @@ from sklearn.pipeline import Pipeline
 
 from inspect_data import open_database
 from race_metrics import evaluate_race_scores
-from feature_transforms import encode_previous_position, encode_previous_position_field, encode_previous_relative_finish
+from feature_transforms import encode_previous_position, encode_previous_position_field, encode_previous_relative_finish, encode_relative_finish_age
 
 
 def main() -> None:
@@ -77,7 +77,8 @@ def main() -> None:
         training_rows = connection.execute(
             """
             SELECT prior_starts, prior_wins, prior_win_rate,
-                   days_since_run, previous_position, previous_runner_count, won
+                   days_since_run, previous_position,
+                   previous_runner_count, age, won
             FROM features
             WHERE split = 'train'
             ORDER BY date, course, off, horse
@@ -86,14 +87,14 @@ def main() -> None:
 
         X_train = np.array(
             [
-                encode_previous_relative_finish(row[:6])
+                encode_relative_finish_age(row[:7])
                 for row in training_rows
             ],
             dtype=float,
         )
 
         y_train = np.array(
-            [row[6] for row in training_rows],
+            [row[-1] for row in training_rows],
             dtype=int,
         )
 
@@ -143,25 +144,39 @@ def main() -> None:
             "previous_result_was_code",
             "previous_runner_count",
             "previous_relative_finish",
+            "age",
             "missing_win_rate",
             "missing_days_since_run",
             "missing_previous_finish_position",
             "missing_previous_runner_count",
             "missing_previous_relative_finish",
+            "missing_age"
         ]
+
+        print(f"Coefficient labels: {len(feature_names)}")
+        print(f"Model coefficients: {len(model.coef_[0])}")
+        print(
+            "Training ages encoded as missing: "
+            f"{np.isnan(X_train[:, 8]).sum():,}"
+        )
+        
+        if len(feature_names) != len(model.coef_[0]):
+            raise ValueError("Coefficient labels do not match model inputs")
 
         print(f"Iterations used: {model.n_iter_[0]}")
         print(f"Intercept: {model.intercept_[0]:.6f}")
 
-        for name, weight in zip(feature_names, model.coef_[0]):
-            print(f"{name}: {weight:.6f}")
+        for name, coefficient in zip(
+            feature_names, model.coef_[0], strict=True
+        ):
+            print(f"{name}: {coefficient:.6f}")
 
         validation_rows = connection.execute(
             """
-            SELECT
-                date, course, off, horse,
-                prior_starts, prior_wins, prior_win_rate,
-                days_since_run, previous_position, previous_runner_count, won
+            SELECT date, course, off, horse,
+                   prior_starts, prior_wins, prior_win_rate,
+                   days_since_run, previous_position,
+                   previous_runner_count, age, won
             FROM features
             WHERE split = 'validation'
             ORDER BY date, course, off, horse
@@ -170,14 +185,14 @@ def main() -> None:
 
         X_validation = np.array(
             [
-                encode_previous_relative_finish(row[4:10])
+                encode_relative_finish_age(row[4:11])
                 for row in validation_rows
             ],
             dtype=float,
         )
 
         y_validation = np.array(
-            [row[10] for row in validation_rows],
+            [row[-1] for row in validation_rows],
             dtype=int,
         )
 
@@ -231,7 +246,7 @@ def main() -> None:
                 "model_log_loss": model_loss,
                 "uniform_log_loss": uniform_loss,
                 "improvement": uniform_loss - model_loss,
-                "input_encoding": "previous_relative_finish_v1",
+                "input_encoding": "relative_finish_age_v1",
             }
 
             args.report.parent.mkdir(parents=True, exist_ok=True)
@@ -252,6 +267,7 @@ def main() -> None:
                     "days_since_run",
                     "previous_position",
                     "previous_runner_count",
+                    "age",
                 ],
                 "input_features": [
                     "prior_starts",
@@ -262,8 +278,9 @@ def main() -> None:
                     "previous_result_was_code",
                     "previous_runner_count",
                     "previous_relative_finish",
+                    "age",
                 ],
-                "input_encoding": "previous_relative_finish_v1",
+                "input_encoding": "relative_finish_age_v1",
                 "history_window_days": None,
                 "training_end_exclusive": "2024-01-01",
                 "sklearn_version": sklearn.__version__,

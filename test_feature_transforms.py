@@ -1,7 +1,7 @@
 import math
 import unittest
 
-from feature_transforms import calculate_relative_finish
+from feature_transforms import calculate_relative_finish, encode_age
 
 
 class TestRelativeFinish(unittest.TestCase):
@@ -36,6 +36,19 @@ class TestRelativeFinish(unittest.TestCase):
                         calculate_relative_finish(position, runner_count)
                     )
                 )
+
+    def test_valid_ages(self):
+        self.assertEqual(encode_age(2), 2.0)
+        self.assertEqual(encode_age(5), 5.0)
+        self.assertEqual(encode_age("16"), 16.0)
+
+    def test_missing_or_invalid_ages(self):
+        for value in (
+            None, "", "-", 0, 1, -1, 2.5,
+            float("nan"), float("inf"),
+        ):
+            with self.subTest(value=value):
+                self.assertTrue(math.isnan(encode_age(value)))
 
 
 if __name__ == "__main__":

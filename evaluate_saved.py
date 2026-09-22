@@ -7,7 +7,7 @@ import numpy as np
 from inspect_data import open_database
 from pathlib import Path
 from race_metrics import evaluate_race_scores
-from feature_transforms import encode_previous_position, encode_previous_position_field, encode_previous_relative_finish
+from feature_transforms import encode_previous_position, encode_previous_position_field, encode_previous_relative_finish, encode_relative_finish_age
 
 
 def main() -> None:
@@ -146,6 +146,37 @@ def main() -> None:
                 "Feature order does not match previous_relative_finish_v1"
             )
 
+    elif encoding == "relative_finish_age_v1":
+        source_features = [
+            "prior_starts",
+            "prior_wins",
+            "prior_win_rate",
+            "days_since_run",
+            "previous_position",
+            "previous_runner_count",
+            "age",
+        ]
+
+        expected_inputs = [
+            "prior_starts",
+            "prior_wins",
+            "prior_win_rate",
+            "days_since_run",
+            "previous_finish_position",
+            "previous_result_was_code",
+            "previous_runner_count",
+            "previous_relative_finish",
+            "age",
+        ]
+
+        if (
+            bundle.get("source_features") != source_features
+            or input_features != expected_inputs
+        ):
+            raise ValueError(
+                "Feature order does not match relative_finish_age_v1"
+            )
+
     else:
         raise ValueError(f"Unknown input encoding: {encoding!r}")
 
@@ -191,6 +222,15 @@ def main() -> None:
         X = np.array(
             [
                 encode_previous_relative_finish(row[4:10])
+                for row in rows
+            ],
+            dtype=float,
+        )
+
+    elif encoding == "relative_finish_age_v1":
+        X = np.array(
+            [
+                encode_relative_finish_age(row[4:11])
                 for row in rows
             ],
             dtype=float,

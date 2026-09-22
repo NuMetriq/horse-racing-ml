@@ -76,3 +76,43 @@ def encode_previous_relative_finish(row):
     relative_finish = calculate_relative_finish(row[4], row[5])
 
     return (*existing_inputs, relative_finish)
+
+def encode_age(value):
+    """Return integer-valued age >= 2, otherwise a missing value."""
+    if value is None:
+        return np.nan
+
+    try:
+        age = float(value)
+    except (TypeError, ValueError):
+        return np.nan
+
+    if not np.isfinite(age) or not age.is_integer() or age < 2:
+        return np.nan
+
+    return age
+
+def encode_relative_finish_age(row):
+    """Convert seven source values into nine model inputs."""
+    (
+        prior_starts,
+        prior_wins,
+        prior_win_rate,
+        days_since_run,
+        previous_position,
+        previous_runner_count,
+        age,
+    ) = row
+
+    existing_inputs = encode_previous_relative_finish(
+        (
+            prior_starts,
+            prior_wins,
+            prior_win_rate,
+            days_since_run,
+            previous_position,
+            previous_runner_count,
+        )
+    )
+
+    return (*existing_inputs, encode_age(age))

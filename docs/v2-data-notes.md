@@ -475,3 +475,16 @@ been established.
 
 This comparison uses an already examined test period and is
 exploratory. Final BSP is not assumed available before the start.
+
+### Availability of earlier market prices
+
+Across all 27,637 rows in the two Betfair mapping files,
+wap, morning_wap, and morning_vol were entirely blank.
+
+The files therefore provide no morning-price benchmark.
+Pre-race minimum and maximum prices do not establish an executable
+price at a specified decision time.
+
+Further evaluation of a pre-race betting strategy requires a
+timestamped odds source. The existing BSP comparison remains a
+retrospective probability benchmark.

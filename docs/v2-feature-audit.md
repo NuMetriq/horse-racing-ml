@@ -318,3 +318,45 @@ Earlier race results could contribute to features for later dates,
 
 with same-day and future results excluded from horse history.
 
+
+
+\### Uncertainty in the 2024 age comparison
+
+
+
+The mean race log-loss improvement from adding age was 0.002837.
+
+
+
+A paired bootstrap resampled the 363 represented race dates with
+
+replacement, retaining all races on each selected date. Each
+
+resample calculated total improvement divided by total races.
+
+
+
+\- Resamples: 10,000
+
+\- Random seed: 42
+
+\- 95% percentile interval: \[0.002058, 0.003611]
+
+
+
+The interval lies entirely above zero, supporting a small improvement
+
+within this development sample. Together with positive improvements
+
+in all four chronological comparisons, this supports retaining age.
+
+
+
+The bootstrap treats dates as independent clusters. It does not
+
+capture dependence across dates, model-training uncertainty, or
+
+selection effects from earlier experiments. These results do not
+
+establish performance on untouched future data or betting profitability.
+

@@ -1,4 +1,5 @@
 import argparse
+import numpy as np
 import csv
 import math
 from statistics import mean, median
@@ -107,6 +108,54 @@ def main():
     print(f"Races improved: {improved:,}")
     print(f"Races worsened: {worsened:,}")
     print(f"Races effectively unchanged: {unchanged:,}")
+
+    daily_differences = {}
+
+    for race_key in sorted(race_keys):
+        race_date = race_key[0]
+        difference = (
+            baseline_losses[race_key] - candidate_losses[race_key]
+        )
+        daily_differences.setdefault(race_date, []).append(difference)
+
+    dates = sorted(daily_differences)
+
+    daily_sums = np.array(
+        [sum(daily_differences[day]) for day in dates],
+        dtype=float,
+    )
+    daily_counts = np.array(
+        [len(daily_differences[day]) for day in dates],
+        dtype=int,
+    )
+
+    if len(dates) < 2:
+        raise ValueError("Date bootstrap requires at least two dates")
+
+    seed = 42
+    resamples = 10_000
+    rng = np.random.default_rng(seed)
+    bootstrap_means = np.empty(resamples)
+
+    for index in range(resamples):
+        sampled_days = rng.integers(
+            0, len(dates), size=len(dates)
+        )
+
+        bootstrap_means[index] = (
+            daily_sums[sampled_days].sum()
+            / daily_counts[sampled_days].sum()
+        )
+
+    lower, upper = np.quantile(bootstrap_means, [0.025, 0.975])
+
+    print("\nPaired bootstrap by race date:")
+    print(f"Dates: {len(dates):,}")
+    print(f"Resamples: {resamples:,} | Seed: {seed}")
+    print(
+        "95% percentile interval for mean improvement: "
+        f"[{lower:+.6f}, {upper:+.6f}]"
+    )
 
     monthly_losses = {}
 

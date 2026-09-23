@@ -148,29 +148,39 @@ def inspect_flagged_race(connection: sqlite3.Connection) -> None:
         print(f"Horse: {horse} | Type: {race_type!r}")
         print(f"Position: {pos!r} | Reported runners: {ran}")
 
+def select_eligible_races(
+    connection: sqlite3.Connection,
+    excluded_keys: set[tuple[str, str, str]] | None = None,
+) -> list[tuple[str, str, str, int]]:
+    excluded_keys = excluded_keys if excluded_keys is not None else set()
+
+    rows = connection.execute(
+        """
+        SELECT date, course, off, COUNT(*) AS runners
+        FROM data
+        WHERE type = 'Flat'
+        GROUP BY date, course, off
+        HAVING SUM(CASE WHEN pos = 1 THEN 1 ELSE 0 END) = 1
+           AND COUNT(*) = MIN(ran)
+           AND MIN(ran) = MAX(ran)
+           AND COUNT(ran) = COUNT(*)
+           AND COUNT(*) >= 2
+        ORDER BY date, course, off
+        """
+    )
+
+    return [
+        row for row in rows
+        if row[:3] not in excluded_keys
+    ]
+
+
 def summarize_eligible_races(
     connection: sqlite3.Connection,
+    excluded_keys: set[tuple[str, str, str]] | None = None,
 ) -> tuple[int, int]:
-    row = connection.execute(
-        """
-        WITH eligible AS (
-            SELECT date, course, off, COUNT(*) AS runners
-            FROM data
-            WHERE type = 'Flat'
-            GROUP BY date, course, off
-            HAVING SUM(CASE WHEN pos = 1 THEN 1 ELSE 0 END) = 1
-               AND COUNT(*) = MIN(ran)
-               AND MIN(ran) = MAX(ran)
-               AND COUNT(ran) = COUNT(*)
-               AND COUNT(*) >= 2
-        )
-        SELECT COUNT(*), SUM(runners)
-        FROM eligible
-        """
-    ).fetchone()
-
-    races, runners = row
-    return races, runners or 0
+    races = select_eligible_races(connection, excluded_keys)
+    return len(races), sum(row[3] for row in races)
 
 def inspect_example_history(connection: sqlite3.Connection) -> None:
     horses = (

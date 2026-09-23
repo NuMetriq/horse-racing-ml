@@ -1,27 +1,58 @@
 import argparse
 import sqlite3
+import csv
 from pathlib import Path
 
-from inspect_data import open_database, summarize_eligible_races
+from inspect_data import open_database, summarize_eligible_races, select_eligible_races
+
+def load_review_exclusions(
+    review_path: Path,
+) -> set[tuple[str, str, str]]:
+    excluded_keys = set()
+    seen_keys = set()
+
+    with review_path.open(
+        encoding="utf-8-sig", newline=""
+    ) as file:
+        reader = csv.DictReader(file)
+
+        required = {"date", "course", "off", "decision", "evidence"}
+
+        if not required.issubset(reader.fieldnames or []):
+            raise ValueError("Review file is missing required columns")
+
+        for row in reader:
+            key = tuple(
+                row[name] for name in ("date", "course", "off")
+            )
+
+            if any(value is None or not value.strip() for value in key):
+                raise ValueError("Review file contains a blank race key")
+
+            if key in seen_keys:
+                raise ValueError(f"Duplicate reviewed race: {key}")
+
+            seen_keys.add(key)
+            decision = (row["decision"] or "").strip()
+
+            if decision not in {"retain_flat", "exclude_non_flat"}:
+                raise ValueError(
+                    f"Unresolved or invalid decision for {key}: {decision!r}"
+                )
+
+            if not (row["evidence"] or "").strip():
+                raise ValueError(f"Missing review evidence for {key}")
+
+            if decision == "exclude_non_flat":
+                excluded_keys.add(key)
+
+    return excluded_keys
 
 def export_races(
     source: sqlite3.Connection,
     output_path: Path,
+    races: list[tuple[str, str, str, int]],
 ) -> None:
-    races = source.execute(
-        """
-        SELECT date, course, off, COUNT(*) AS runners
-        FROM data
-        WHERE type = 'Flat'
-        GROUP BY date, course, off
-        HAVING SUM(CASE WHEN pos = 1 THEN 1 ELSE 0 END) = 1
-           AND COUNT(*) = MIN(ran)
-           AND MIN(ran) = MAX(ran)
-           AND COUNT(ran) = COUNT(*)
-           AND COUNT(*) >= 2
-        """
-
-    )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     destination = sqlite3.connect(output_path)
@@ -117,33 +148,65 @@ def export_races(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Prepare the initial flat-racing dataset."
+        description="Prepare the reviewed flat-racing dataset."
     )
     parser.add_argument("database", type=Path)
-
     parser.add_argument(
         "--output",
         type=Path,
         required=True,
         help="Destination for the prepared SQLite database",
     )
+    parser.add_argument(
+        "--race-type-review",
+        type=Path,
+        required=True,
+        help="Completed CSV containing race-type review decisions",
+    )
 
     args = parser.parse_args()
-
     output_path = args.output.resolve()
 
     if output_path.exists():
         raise FileExistsError(f"Output already exists: {output_path}")
 
-    print(f"Output destination: {output_path}")
-
+    excluded_keys = load_review_exclusions(args.race_type_review)
     connection = open_database(args.database.resolve())
 
     try:
-        races, runners = summarize_eligible_races(connection)
-        print(f"Eligible race groups: {races:,}")
-        print(f"Eligible runner rows: {runners:,}")
-        export_races(connection, output_path)
+        original_races = select_eligible_races(connection)
+
+        removed_races = [
+            row for row in original_races
+            if row[:3] in excluded_keys
+        ]
+        races = [
+            row for row in original_races
+            if row[:3] not in excluded_keys
+        ]
+
+        if not races:
+            raise ValueError("No eligible races remain")
+
+        print(f"Output destination: {output_path}")
+        print(f"Reviewed exclusion keys: {len(excluded_keys):,}")
+        print(f"Eligible race groups before review: {len(original_races):,}")
+        print(f"Eligible race groups removed: {len(removed_races):,}")
+        print(
+            "Eligible runner rows removed: "
+            f"{sum(row[3] for row in removed_races):,}"
+        )
+        print(
+            "Exclusion keys outside the eligible set: "
+            f"{len(excluded_keys) - len(removed_races):,}"
+        )
+        print(f"Eligible race groups after review: {len(races):,}")
+        print(
+            "Eligible runner rows after review: "
+            f"{sum(row[3] for row in races):,}"
+        )
+
+        export_races(connection, output_path, races)
     finally:
         connection.close()
 

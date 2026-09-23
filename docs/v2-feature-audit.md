@@ -360,3 +360,45 @@ selection effects from earlier experiments. These results do not
 
 establish performance on untouched future data or betting profitability.
 
+
+
+\### Race-type correction and model impact
+
+
+
+Review of 43 training-period candidates produced 22 non-flat
+
+exclusions and 21 retained flat races. All 22 exclusions matched
+
+previously eligible races, removing 233 runner rows.
+
+
+
+The corrected dataset contains 126,112 races and 1,265,425 runners.
+
+Historical features were rebuilt after exclusions.
+
+
+
+With the same age-model settings and date boundaries, 2024
+
+validation race log loss changed from 2.157301 to 2.157347
+
+(a deterioration of 0.000046, based on displayed values).
+
+The evaluation population remained 117,378 runners in 11,637 races.
+
+
+
+Retain the correction because the excluded races fall outside
+
+the intended flat-racing scope. No performance benefit is claimed.
+
+
+
+This targeted review covered flagged races from 2015–2023.
+
+It does not establish that all classification errors have been
+
+found or that later periods have been audited.
+

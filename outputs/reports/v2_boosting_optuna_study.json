@@ -1,0 +1,1369 @@
+{
+  "study_name": "boosting_temporal_v1",
+  "direction": "MINIMIZE",
+  "metadata": {
+    "database": "C:\\Users\\Owner\\Documents\\NuMetriq\\horse-racing-ml\\data\\processed\\v2_features_reviewed_distance_v2.db",
+    "evaluation_years": [
+      2021,
+      2022,
+      2023
+    ],
+    "feature_set": "relative_finish_age_distance_change",
+    "numpy_version": "2.4.6",
+    "objective": "Equal-weight mean of annual race log losses",
+    "optuna_version": "5.0.0",
+    "sklearn_version": "1.9.1",
+    "trial_budget": 20
+  },
+  "best_trial": 10,
+  "best_value": 2.119014365831881,
+  "best_parameters": {
+    "learning_rate": 0.030902793355826564,
+    "max_iter": 400,
+    "max_leaf_nodes": 30,
+    "min_samples_leaf": 120,
+    "l2_regularization": 0.02107434007660055
+  },
+  "trials": [
+    {
+      "number": 0,
+      "state": "COMPLETE",
+      "value": 2.119971105543135,
+      "parameters": {
+        "learning_rate": 0.05,
+        "max_iter": 200,
+        "max_leaf_nodes": 15,
+        "min_samples_leaf": 50,
+        "l2_regularization": 1.0
+      },
+      "distributions": {
+        "learning_rate": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.02,
+            "high": 0.1,
+            "log": true
+          }
+        },
+        "max_iter": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 50,
+            "low": 100,
+            "high": 400
+          }
+        },
+        "max_leaf_nodes": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 1,
+            "low": 7,
+            "high": 31
+          }
+        },
+        "min_samples_leaf": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 10,
+            "low": 20,
+            "high": 200
+          }
+        },
+        "l2_regularization": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.01,
+            "high": 10.0,
+            "log": true
+          }
+        }
+      },
+      "results": {
+        "log_loss_2021": 2.116283795391905,
+        "log_loss_2022": 2.11159235553846,
+        "log_loss_2023": 2.1320371656990407,
+        "races_2021": 11776,
+        "races_2022": 11530,
+        "races_2023": 10530
+      }
+    },
+    {
+      "number": 1,
+      "state": "COMPLETE",
+      "value": 2.119099510344315,
+      "parameters": {
+        "learning_rate": 0.03654452355213248,
+        "max_iter": 400,
+        "max_leaf_nodes": 25,
+        "min_samples_leaf": 130,
+        "l2_regularization": 0.02938027938703535
+      },
+      "distributions": {
+        "learning_rate": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.02,
+            "high": 0.1,
+            "log": true
+          }
+        },
+        "max_iter": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 50,
+            "low": 100,
+            "high": 400
+          }
+        },
+        "max_leaf_nodes": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 1,
+            "low": 7,
+            "high": 31
+          }
+        },
+        "min_samples_leaf": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 10,
+            "low": 20,
+            "high": 200
+          }
+        },
+        "l2_regularization": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.01,
+            "high": 10.0,
+            "log": true
+          }
+        }
+      },
+      "results": {
+        "log_loss_2021": 2.1152261546466913,
+        "log_loss_2022": 2.1109337055170156,
+        "log_loss_2023": 2.131138670869239,
+        "races_2021": 11776,
+        "races_2022": 11530,
+        "races_2023": 10530
+      }
+    },
+    {
+      "number": 2,
+      "state": "COMPLETE",
+      "value": 2.126023970795336,
+      "parameters": {
+        "learning_rate": 0.025707833957860277,
+        "max_iter": 100,
+        "max_leaf_nodes": 28,
+        "min_samples_leaf": 130,
+        "l2_regularization": 1.3311216080736887
+      },
+      "distributions": {
+        "learning_rate": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.02,
+            "high": 0.1,
+            "log": true
+          }
+        },
+        "max_iter": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 50,
+            "low": 100,
+            "high": 400
+          }
+        },
+        "max_leaf_nodes": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 1,
+            "low": 7,
+            "high": 31
+          }
+        },
+        "min_samples_leaf": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 10,
+            "low": 20,
+            "high": 200
+          }
+        },
+        "l2_regularization": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.01,
+            "high": 10.0,
+            "log": true
+          }
+        }
+      },
+      "results": {
+        "log_loss_2021": 2.1237808735377,
+        "log_loss_2022": 2.1175783160365116,
+        "log_loss_2023": 2.1367127228117972,
+        "races_2021": 11776,
+        "races_2022": 11530,
+        "races_2023": 10530
+      }
+    },
+    {
+      "number": 3,
+      "state": "COMPLETE",
+      "value": 2.1195520627554165,
+      "parameters": {
+        "learning_rate": 0.020673687141394805,
+        "max_iter": 400,
+        "max_leaf_nodes": 27,
+        "min_samples_leaf": 60,
+        "l2_regularization": 0.035113563139704075
+      },
+      "distributions": {
+        "learning_rate": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.02,
+            "high": 0.1,
+            "log": true
+          }
+        },
+        "max_iter": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 50,
+            "low": 100,
+            "high": 400
+          }
+        },
+        "max_leaf_nodes": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 1,
+            "low": 7,
+            "high": 31
+          }
+        },
+        "min_samples_leaf": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 10,
+            "low": 20,
+            "high": 200
+          }
+        },
+        "l2_regularization": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.01,
+            "high": 10.0,
+            "log": true
+          }
+        }
+      },
+      "results": {
+        "log_loss_2021": 2.1160082565360177,
+        "log_loss_2022": 2.1110119575768462,
+        "log_loss_2023": 2.1316359741533857,
+        "races_2021": 11776,
+        "races_2022": 11530,
+        "races_2023": 10530
+      }
+    },
+    {
+      "number": 4,
+      "state": "COMPLETE",
+      "value": 2.1207314410260274,
+      "parameters": {
+        "learning_rate": 0.026867313736068595,
+        "max_iter": 200,
+        "max_leaf_nodes": 20,
+        "min_samples_leaf": 100,
+        "l2_regularization": 0.07476312062252301
+      },
+      "distributions": {
+        "learning_rate": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.02,
+            "high": 0.1,
+            "log": true
+          }
+        },
+        "max_iter": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 50,
+            "low": 100,
+            "high": 400
+          }
+        },
+        "max_leaf_nodes": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 1,
+            "low": 7,
+            "high": 31
+          }
+        },
+        "min_samples_leaf": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 10,
+            "low": 20,
+            "high": 200
+          }
+        },
+        "l2_regularization": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.01,
+            "high": 10.0,
+            "log": true
+          }
+        }
+      },
+      "results": {
+        "log_loss_2021": 2.1176402994211454,
+        "log_loss_2022": 2.1118363582700588,
+        "log_loss_2023": 2.132717665386878,
+        "races_2021": 11776,
+        "races_2022": 11530,
+        "races_2023": 10530
+      }
+    },
+    {
+      "number": 5,
+      "state": "COMPLETE",
+      "value": 2.1218106457781705,
+      "parameters": {
+        "learning_rate": 0.053542274484291816,
+        "max_iter": 100,
+        "max_leaf_nodes": 14,
+        "min_samples_leaf": 80,
+        "l2_regularization": 0.23345864076016243
+      },
+      "distributions": {
+        "learning_rate": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.02,
+            "high": 0.1,
+            "log": true
+          }
+        },
+        "max_iter": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 50,
+            "low": 100,
+            "high": 400
+          }
+        },
+        "max_leaf_nodes": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 1,
+            "low": 7,
+            "high": 31
+          }
+        },
+        "min_samples_leaf": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 10,
+            "low": 20,
+            "high": 200
+          }
+        },
+        "l2_regularization": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.01,
+            "high": 10.0,
+            "log": true
+          }
+        }
+      },
+      "results": {
+        "log_loss_2021": 2.11893173250783,
+        "log_loss_2022": 2.113149446234138,
+        "log_loss_2023": 2.133350758592543,
+        "races_2021": 11776,
+        "races_2022": 11530,
+        "races_2023": 10530
+      }
+    },
+    {
+      "number": 6,
+      "state": "COMPLETE",
+      "value": 2.119735623401765,
+      "parameters": {
+        "learning_rate": 0.07076922519051031,
+        "max_iter": 150,
+        "max_leaf_nodes": 19,
+        "min_samples_leaf": 130,
+        "l2_regularization": 0.013783237455007183
+      },
+      "distributions": {
+        "learning_rate": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.02,
+            "high": 0.1,
+            "log": true
+          }
+        },
+        "max_iter": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 50,
+            "low": 100,
+            "high": 400
+          }
+        },
+        "max_leaf_nodes": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 1,
+            "low": 7,
+            "high": 31
+          }
+        },
+        "min_samples_leaf": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 10,
+            "low": 20,
+            "high": 200
+          }
+        },
+        "l2_regularization": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.01,
+            "high": 10.0,
+            "log": true
+          }
+        }
+      },
+      "results": {
+        "log_loss_2021": 2.1162809562373783,
+        "log_loss_2022": 2.1111727956471045,
+        "log_loss_2023": 2.1317531183208116,
+        "races_2021": 11776,
+        "races_2022": 11530,
+        "races_2023": 10530
+      }
+    },
+    {
+      "number": 7,
+      "state": "COMPLETE",
+      "value": 2.1228522161640684,
+      "parameters": {
+        "learning_rate": 0.05317232167577955,
+        "max_iter": 150,
+        "max_leaf_nodes": 8,
+        "min_samples_leaf": 200,
+        "l2_regularization": 7.886714129990489
+      },
+      "distributions": {
+        "learning_rate": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.02,
+            "high": 0.1,
+            "log": true
+          }
+        },
+        "max_iter": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 50,
+            "low": 100,
+            "high": 400
+          }
+        },
+        "max_leaf_nodes": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 1,
+            "low": 7,
+            "high": 31
+          }
+        },
+        "min_samples_leaf": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 10,
+            "low": 20,
+            "high": 200
+          }
+        },
+        "l2_regularization": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.01,
+            "high": 10.0,
+            "log": true
+          }
+        }
+      },
+      "results": {
+        "log_loss_2021": 2.1202449968489847,
+        "log_loss_2022": 2.1138646905784877,
+        "log_loss_2023": 2.134446961064733,
+        "races_2021": 11776,
+        "races_2022": 11530,
+        "races_2023": 10530
+      }
+    },
+    {
+      "number": 8,
+      "state": "COMPLETE",
+      "value": 2.1203952061965032,
+      "parameters": {
+        "learning_rate": 0.07346415600924099,
+        "max_iter": 200,
+        "max_leaf_nodes": 9,
+        "min_samples_leaf": 150,
+        "l2_regularization": 0.2091498132903561
+      },
+      "distributions": {
+        "learning_rate": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.02,
+            "high": 0.1,
+            "log": true
+          }
+        },
+        "max_iter": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 50,
+            "low": 100,
+            "high": 400
+          }
+        },
+        "max_leaf_nodes": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 1,
+            "low": 7,
+            "high": 31
+          }
+        },
+        "min_samples_leaf": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 10,
+            "low": 20,
+            "high": 200
+          }
+        },
+        "l2_regularization": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.01,
+            "high": 10.0,
+            "log": true
+          }
+        }
+      },
+      "results": {
+        "log_loss_2021": 2.1172847502393117,
+        "log_loss_2022": 2.1118178104351095,
+        "log_loss_2023": 2.1320830579150885,
+        "races_2021": 11776,
+        "races_2022": 11530,
+        "races_2023": 10530
+      }
+    },
+    {
+      "number": 9,
+      "state": "COMPLETE",
+      "value": 2.1248979148761524,
+      "parameters": {
+        "learning_rate": 0.02434058776747756,
+        "max_iter": 250,
+        "max_leaf_nodes": 7,
+        "min_samples_leaf": 190,
+        "l2_regularization": 0.059750279999602945
+      },
+      "distributions": {
+        "learning_rate": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.02,
+            "high": 0.1,
+            "log": true
+          }
+        },
+        "max_iter": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 50,
+            "low": 100,
+            "high": 400
+          }
+        },
+        "max_leaf_nodes": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 1,
+            "low": 7,
+            "high": 31
+          }
+        },
+        "min_samples_leaf": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 10,
+            "low": 20,
+            "high": 200
+          }
+        },
+        "l2_regularization": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.01,
+            "high": 10.0,
+            "log": true
+          }
+        }
+      },
+      "results": {
+        "log_loss_2021": 2.1225079606913395,
+        "log_loss_2022": 2.1159241493275287,
+        "log_loss_2023": 2.136261634609589,
+        "races_2021": 11776,
+        "races_2022": 11530,
+        "races_2023": 10530
+      }
+    },
+    {
+      "number": 10,
+      "state": "COMPLETE",
+      "value": 2.119014365831881,
+      "parameters": {
+        "learning_rate": 0.030902793355826564,
+        "max_iter": 400,
+        "max_leaf_nodes": 30,
+        "min_samples_leaf": 120,
+        "l2_regularization": 0.02107434007660055
+      },
+      "distributions": {
+        "learning_rate": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.02,
+            "high": 0.1,
+            "log": true
+          }
+        },
+        "max_iter": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 50,
+            "low": 100,
+            "high": 400
+          }
+        },
+        "max_leaf_nodes": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 1,
+            "low": 7,
+            "high": 31
+          }
+        },
+        "min_samples_leaf": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 10,
+            "low": 20,
+            "high": 200
+          }
+        },
+        "l2_regularization": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.01,
+            "high": 10.0,
+            "log": true
+          }
+        }
+      },
+      "results": {
+        "log_loss_2021": 2.1152805575910993,
+        "log_loss_2022": 2.110814026172382,
+        "log_loss_2023": 2.1309485137321618,
+        "races_2021": 11776,
+        "races_2022": 11530,
+        "races_2023": 10530
+      }
+    },
+    {
+      "number": 11,
+      "state": "COMPLETE",
+      "value": 2.119082341389384,
+      "parameters": {
+        "learning_rate": 0.029068131192577906,
+        "max_iter": 400,
+        "max_leaf_nodes": 25,
+        "min_samples_leaf": 140,
+        "l2_regularization": 0.010536109384059944
+      },
+      "distributions": {
+        "learning_rate": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.02,
+            "high": 0.1,
+            "log": true
+          }
+        },
+        "max_iter": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 50,
+            "low": 100,
+            "high": 400
+          }
+        },
+        "max_leaf_nodes": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 1,
+            "low": 7,
+            "high": 31
+          }
+        },
+        "min_samples_leaf": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 10,
+            "low": 20,
+            "high": 200
+          }
+        },
+        "l2_regularization": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.01,
+            "high": 10.0,
+            "log": true
+          }
+        }
+      },
+      "results": {
+        "log_loss_2021": 2.115139416129955,
+        "log_loss_2022": 2.1107549822835106,
+        "log_loss_2023": 2.1313526257546864,
+        "races_2021": 11776,
+        "races_2022": 11530,
+        "races_2023": 10530
+      }
+    },
+    {
+      "number": 12,
+      "state": "COMPLETE",
+      "value": 2.1193972441145763,
+      "parameters": {
+        "learning_rate": 0.03579884037228993,
+        "max_iter": 400,
+        "max_leaf_nodes": 31,
+        "min_samples_leaf": 70,
+        "l2_regularization": 0.014251117222791683
+      },
+      "distributions": {
+        "learning_rate": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.02,
+            "high": 0.1,
+            "log": true
+          }
+        },
+        "max_iter": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 50,
+            "low": 100,
+            "high": 400
+          }
+        },
+        "max_leaf_nodes": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 1,
+            "low": 7,
+            "high": 31
+          }
+        },
+        "min_samples_leaf": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 10,
+            "low": 20,
+            "high": 200
+          }
+        },
+        "l2_regularization": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.01,
+            "high": 10.0,
+            "log": true
+          }
+        }
+      },
+      "results": {
+        "log_loss_2021": 2.115522049510702,
+        "log_loss_2022": 2.1111861071980447,
+        "log_loss_2023": 2.1314835756349826,
+        "races_2021": 11776,
+        "races_2022": 11530,
+        "races_2023": 10530
+      }
+    },
+    {
+      "number": 13,
+      "state": "COMPLETE",
+      "value": 2.1192239643919426,
+      "parameters": {
+        "learning_rate": 0.03418285877742186,
+        "max_iter": 350,
+        "max_leaf_nodes": 25,
+        "min_samples_leaf": 180,
+        "l2_regularization": 0.011004009421939843
+      },
+      "distributions": {
+        "learning_rate": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.02,
+            "high": 0.1,
+            "log": true
+          }
+        },
+        "max_iter": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 50,
+            "low": 100,
+            "high": 400
+          }
+        },
+        "max_leaf_nodes": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 1,
+            "low": 7,
+            "high": 31
+          }
+        },
+        "min_samples_leaf": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 10,
+            "low": 20,
+            "high": 200
+          }
+        },
+        "l2_regularization": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.01,
+            "high": 10.0,
+            "log": true
+          }
+        }
+      },
+      "results": {
+        "log_loss_2021": 2.115340878199303,
+        "log_loss_2022": 2.1106374179375353,
+        "log_loss_2023": 2.1316935970389896,
+        "races_2021": 11776,
+        "races_2022": 11530,
+        "races_2023": 10530
+      }
+    },
+    {
+      "number": 14,
+      "state": "COMPLETE",
+      "value": 2.119207009862809,
+      "parameters": {
+        "learning_rate": 0.027066043601660227,
+        "max_iter": 350,
+        "max_leaf_nodes": 27,
+        "min_samples_leaf": 150,
+        "l2_regularization": 0.2266797957177633
+      },
+      "distributions": {
+        "learning_rate": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.02,
+            "high": 0.1,
+            "log": true
+          }
+        },
+        "max_iter": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 50,
+            "low": 100,
+            "high": 400
+          }
+        },
+        "max_leaf_nodes": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 1,
+            "low": 7,
+            "high": 31
+          }
+        },
+        "min_samples_leaf": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 10,
+            "low": 20,
+            "high": 200
+          }
+        },
+        "l2_regularization": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.01,
+            "high": 10.0,
+            "log": true
+          }
+        }
+      },
+      "results": {
+        "log_loss_2021": 2.1154148568912765,
+        "log_loss_2022": 2.110937800476599,
+        "log_loss_2023": 2.131268372220552,
+        "races_2021": 11776,
+        "races_2022": 11530,
+        "races_2023": 10530
+      }
+    },
+    {
+      "number": 15,
+      "state": "COMPLETE",
+      "value": 2.1200823273594573,
+      "parameters": {
+        "learning_rate": 0.02423743691290362,
+        "max_iter": 350,
+        "max_leaf_nodes": 18,
+        "min_samples_leaf": 60,
+        "l2_regularization": 0.014014124518342075
+      },
+      "distributions": {
+        "learning_rate": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.02,
+            "high": 0.1,
+            "log": true
+          }
+        },
+        "max_iter": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 50,
+            "low": 100,
+            "high": 400
+          }
+        },
+        "max_leaf_nodes": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 1,
+            "low": 7,
+            "high": 31
+          }
+        },
+        "min_samples_leaf": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 10,
+            "low": 20,
+            "high": 200
+          }
+        },
+        "l2_regularization": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.01,
+            "high": 10.0,
+            "log": true
+          }
+        }
+      },
+      "results": {
+        "log_loss_2021": 2.116911133750864,
+        "log_loss_2022": 2.1111440978194818,
+        "log_loss_2023": 2.1321917505080266,
+        "races_2021": 11776,
+        "races_2022": 11530,
+        "races_2023": 10530
+      }
+    },
+    {
+      "number": 16,
+      "state": "COMPLETE",
+      "value": 2.1192700894522365,
+      "parameters": {
+        "learning_rate": 0.03745263934591097,
+        "max_iter": 300,
+        "max_leaf_nodes": 28,
+        "min_samples_leaf": 80,
+        "l2_regularization": 0.03476088122353037
+      },
+      "distributions": {
+        "learning_rate": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.02,
+            "high": 0.1,
+            "log": true
+          }
+        },
+        "max_iter": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 50,
+            "low": 100,
+            "high": 400
+          }
+        },
+        "max_leaf_nodes": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 1,
+            "low": 7,
+            "high": 31
+          }
+        },
+        "min_samples_leaf": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 10,
+            "low": 20,
+            "high": 200
+          }
+        },
+        "l2_regularization": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.01,
+            "high": 10.0,
+            "log": true
+          }
+        }
+      },
+      "results": {
+        "log_loss_2021": 2.1158511362901318,
+        "log_loss_2022": 2.1107501501866186,
+        "log_loss_2023": 2.131208981879959,
+        "races_2021": 11776,
+        "races_2022": 11530,
+        "races_2023": 10530
+      }
+    },
+    {
+      "number": 17,
+      "state": "COMPLETE",
+      "value": 2.119285548449678,
+      "parameters": {
+        "learning_rate": 0.023095183951505317,
+        "max_iter": 400,
+        "max_leaf_nodes": 28,
+        "min_samples_leaf": 130,
+        "l2_regularization": 0.06767925313563013
+      },
+      "distributions": {
+        "learning_rate": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.02,
+            "high": 0.1,
+            "log": true
+          }
+        },
+        "max_iter": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 50,
+            "low": 100,
+            "high": 400
+          }
+        },
+        "max_leaf_nodes": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 1,
+            "low": 7,
+            "high": 31
+          }
+        },
+        "min_samples_leaf": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 10,
+            "low": 20,
+            "high": 200
+          }
+        },
+        "l2_regularization": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.01,
+            "high": 10.0,
+            "log": true
+          }
+        }
+      },
+      "results": {
+        "log_loss_2021": 2.115913790052379,
+        "log_loss_2022": 2.110722510121837,
+        "log_loss_2023": 2.1312203451748184,
+        "races_2021": 11776,
+        "races_2022": 11530,
+        "races_2023": 10530
+      }
+    },
+    {
+      "number": 18,
+      "state": "COMPLETE",
+      "value": 2.119736628043761,
+      "parameters": {
+        "learning_rate": 0.02510891423510521,
+        "max_iter": 300,
+        "max_leaf_nodes": 23,
+        "min_samples_leaf": 120,
+        "l2_regularization": 0.04141968954266596
+      },
+      "distributions": {
+        "learning_rate": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.02,
+            "high": 0.1,
+            "log": true
+          }
+        },
+        "max_iter": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 50,
+            "low": 100,
+            "high": 400
+          }
+        },
+        "max_leaf_nodes": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 1,
+            "low": 7,
+            "high": 31
+          }
+        },
+        "min_samples_leaf": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 10,
+            "low": 20,
+            "high": 200
+          }
+        },
+        "l2_regularization": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.01,
+            "high": 10.0,
+            "log": true
+          }
+        }
+      },
+      "results": {
+        "log_loss_2021": 2.1165057763396304,
+        "log_loss_2022": 2.11091719274242,
+        "log_loss_2023": 2.131786915049233,
+        "races_2021": 11776,
+        "races_2022": 11530,
+        "races_2023": 10530
+      }
+    },
+    {
+      "number": 19,
+      "state": "COMPLETE",
+      "value": 2.1193003923764047,
+      "parameters": {
+        "learning_rate": 0.03543794053132848,
+        "max_iter": 400,
+        "max_leaf_nodes": 19,
+        "min_samples_leaf": 90,
+        "l2_regularization": 0.011736314055623958
+      },
+      "distributions": {
+        "learning_rate": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.02,
+            "high": 0.1,
+            "log": true
+          }
+        },
+        "max_iter": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 50,
+            "low": 100,
+            "high": 400
+          }
+        },
+        "max_leaf_nodes": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 1,
+            "low": 7,
+            "high": 31
+          }
+        },
+        "min_samples_leaf": {
+          "name": "IntDistribution",
+          "attributes": {
+            "log": false,
+            "step": 10,
+            "low": 20,
+            "high": 200
+          }
+        },
+        "l2_regularization": {
+          "name": "FloatDistribution",
+          "attributes": {
+            "step": null,
+            "low": 0.01,
+            "high": 10.0,
+            "log": true
+          }
+        }
+      },
+      "results": {
+        "log_loss_2021": 2.1152979510772023,
+        "log_loss_2022": 2.1109450550445192,
+        "log_loss_2023": 2.131658171007493,
+        "races_2021": 11776,
+        "races_2022": 11530,
+        "races_2023": 10530
+      }
+    }
+  ]
+}

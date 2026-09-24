@@ -57,7 +57,21 @@ def main() -> None:
         default="relative_finish_age",
         help="Model inputs to use (default: relative_finish_age)",
     )
+    parser.add_argument(
+        "--max-iter",
+        type=int,
+        default=200,
+        help="Number of boosting iterations (default: 200)",
+    )
+    parser.add_argument(
+        "--parameters",
+        type=Path,
+        help="JSON parameter overrides; takes precedence over --max-iter",
+    )
     args = parser.parse_args()
+
+    if args.max_iter < 1:
+        parser.error("--max-iter must be at least 1")
 
     try:
         train_end = calendar_date.fromisoformat(args.train_end)
@@ -195,19 +209,41 @@ def main() -> None:
         print(f"y_train shape: {y_train.shape}")
         print(f"Missing input values: {np.isnan(X_train).sum():,}")
 
+        settings = {
+            "learning_rate": 0.05,
+            "max_iter": args.max_iter,
+            "max_leaf_nodes": 15,
+            "min_samples_leaf": 50,
+            "l2_regularization": 1.0,
+        }
+
+        if args.parameters is not None:
+            with args.parameters.open(encoding="utf-8") as file:
+                overrides = json.load(file)
+
+            if not isinstance(overrides, dict):
+                raise ValueError("Parameter file must contain a JSON object")
+
+            unknown = set(overrides) - set(settings)
+            if unknown:
+                raise ValueError(
+                    f"Unsupported parameters: {sorted(unknown)}"
+                )
+
+            settings.update(overrides)
+
+        print("Boosting settings:")
+        print(json.dumps(settings, indent=2))
+
         pipeline = Pipeline(
             [
                 (
                     "classifier",
                     HistGradientBoostingClassifier(
                         loss="log_loss",
-                        learning_rate=0.05,
-                        max_iter=200,
-                        max_leaf_nodes=15,
-                        min_samples_leaf=50,
-                        l2_regularization=1.0,
                         early_stopping=False,
                         random_state=42,
+                        **settings,
                     ),
                 ),
             ]

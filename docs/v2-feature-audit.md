@@ -552,3 +552,91 @@ dependence between dates, or model-fitting uncertainty.
 
 No betting-profitability claim follows from this comparison.
 
+
+
+\### Optuna hyperparameter search
+
+
+
+Ran 20 trials, including the initial boosting configuration,
+
+using a seeded TPE sampler. Each trial fitted three chronological
+
+folds and minimized the equally weighted mean race log loss for
+
+2021, 2022, and 2023. All trials evaluated all three years.
+
+
+
+Trial 10 achieved the lowest tuning objective.
+
+
+
+| Parameter | Selected value |
+
+|---|---:|
+
+| learning\_rate | 0.030902793355826564 |
+
+| max\_iter | 400 |
+
+| max\_leaf\_nodes | 30 |
+
+| min\_samples\_leaf | 120 |
+
+| l2\_regularization | 0.02107434007660055 |
+
+
+
+| Evaluation year | Initial boosting | Tuned boosting | Improvement |
+
+|---|---:|---:|---:|
+
+| 2021 | 2.116284 | 2.115281 | +0.001003 |
+
+| 2022 | 2.111592 | 2.110814 | +0.000778 |
+
+| 2023 | 2.132037 | 2.130949 | +0.001088 |
+
+| 2024 | 2.135187 | 2.134307 | +0.000880 |
+
+
+
+The selected settings were frozen before evaluating 2024.
+
+That year was outside the optimization objective but had already
+
+been examined during development; it is not an untouched test.
+
+
+
+The 2024 comparison matched 117,378 runners across 11,637 races.
+
+Seven months improved and five worsened. A paired bootstrap by
+
+race date, using 363 dates, 10,000 resamples, and seed 42, produced
+
+a 95% percentile interval of \[-0.000047, +0.001803] for mean
+
+improvement.
+
+
+
+Interpretation: the tuned model has a slightly better observed
+
+score, but the interval includes zero. The evidence for its
+
+incremental advantage is weaker than the evidence for switching
+
+from logistic regression to boosting.
+
+
+
+Decision: preserve the tuned model as a candidate and retain
+
+initial boosting as the established benchmark. Stop this search
+
+at the planned budget. The bootstrap does not account for model
+
+selection, dependence across dates, or fitting uncertainty.
+

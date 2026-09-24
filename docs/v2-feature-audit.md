@@ -468,3 +468,87 @@ dependence across dates, or model-fitting uncertainty.
 
 No betting-profitability claim follows from these results.
 
+
+
+\### Initial histogram gradient boosting comparison
+
+
+
+Compared histogram gradient boosting against logistic regression
+
+using the same reviewed dataset, ten encoded input features,
+
+and annual evaluation periods. Each model was trained on dates
+
+from 2015 up to the start of its evaluation year.
+
+
+
+Boosting used native missing-value handling, without scaling or
+
+the logarithmic gap transformation used by logistic regression.
+
+This comparison therefore evaluates the two complete pipelines.
+
+
+
+Fixed boosting settings:
+
+\- Learning rate: 0.05
+
+\- Iterations: 200
+
+\- Maximum leaves per tree: 15
+
+\- Minimum samples per leaf: 50
+
+\- L2 regularization: 1.0
+
+\- Early stopping: disabled
+
+\- Random seed: 42
+
+
+
+| Evaluation year | Logistic log loss | Boosting log loss | Improvement |
+
+|---|---:|---:|---:|
+
+| 2021 | 2.134419 | 2.116284 | +0.018135 |
+
+| 2022 | 2.129207 | 2.111592 | +0.017615 |
+
+| 2023 | 2.152865 | 2.132037 | +0.020828 |
+
+| 2024 | 2.156699 | 2.135187 | +0.021512 |
+
+
+
+Probabilities were normalized within each race before evaluation.
+
+
+
+The 2024 comparison matched 117,378 runners across 11,637 races.
+
+All 12 months improved. A paired bootstrap over 363 race dates
+
+used 10,000 resamples and seed 42, giving a 95% percentile interval
+
+of \[+0.018763, +0.024281] for mean log-loss improvement.
+
+
+
+Decision: select boosting as the current development model and
+
+retain logistic regression as a benchmark.
+
+
+
+These are development results, not an untouched final assessment.
+
+The bootstrap does not account for repeated model selection,
+
+dependence between dates, or model-fitting uncertainty.
+
+No betting-profitability claim follows from this comparison.
+

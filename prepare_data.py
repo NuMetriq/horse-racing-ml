@@ -2,6 +2,7 @@ import argparse
 import sqlite3
 import csv
 from pathlib import Path
+from distance import parse_distance_furlongs
 
 from inspect_data import open_database, summarize_eligible_races, select_eligible_races
 
@@ -51,8 +52,29 @@ def load_review_exclusions(
 def export_races(
     source: sqlite3.Connection,
     output_path: Path,
-    races: list[tuple[str, str, str, int]],
+    races: list[tuple[str, str, str, int, str | None]],
 ) -> None:
+    prepared_races = []
+
+    for race_date, course, off, runners, distance_text in races:
+        try:
+            distance_furlongs = parse_distance_furlongs(distance_text)
+        except ValueError as error:
+            raise ValueError(
+                f"Invalid distance for {(race_date, course, off)}: "
+                f"{distance_text!r}"
+            ) from error
+
+        prepared_races.append(
+            (
+                race_date,
+                course,
+                off,
+                runners,
+                distance_text,
+                distance_furlongs,
+            )
+        )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     destination = sqlite3.connect(output_path)
@@ -67,6 +89,12 @@ def export_races(
                     course TEXT NOT NULL,
                     off TEXT NOT NULL,
                     runner_count INTEGER NOT NULL,
+                    distance_text TEXT,
+                    distance_furlongs REAL
+                        CHECK (
+                            distance_furlongs IS NULL
+                            OR distance_furlongs > 0
+                        ),
                     PRIMARY KEY (date, course, off)
                 )
                 """
@@ -74,10 +102,13 @@ def export_races(
 
             destination.executemany(
                 """
-                INSERT INTO races (date, course, off, runner_count)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO races (
+                    date, course, off, runner_count,
+                    distance_text, distance_furlongs
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                races,
+                prepared_races,
             )
 
             destination.execute(

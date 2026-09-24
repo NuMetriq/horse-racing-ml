@@ -151,12 +151,15 @@ def inspect_flagged_race(connection: sqlite3.Connection) -> None:
 def select_eligible_races(
     connection: sqlite3.Connection,
     excluded_keys: set[tuple[str, str, str]] | None = None,
-) -> list[tuple[str, str, str, int]]:
+) -> list[tuple[str, str, str, int, str | None]]:
     excluded_keys = excluded_keys if excluded_keys is not None else set()
 
     rows = connection.execute(
         """
-        SELECT date, course, off, COUNT(*) AS runners
+        SELECT date, course, off, COUNT(*) AS runners,
+               MIN(dist) AS distance_text,
+               COUNT(DISTINCT dist) AS distance_count,
+               COUNT(dist) AS nonnull_distances
         FROM data
         WHERE type = 'Flat'
         GROUP BY date, course, off
@@ -169,10 +172,29 @@ def select_eligible_races(
         """
     )
 
-    return [
-        row for row in rows
-        if row[:3] not in excluded_keys
-    ]
+    eligible = []
+
+    for row in rows:
+        race_key = row[:3]
+
+        if race_key in excluded_keys:
+            continue
+
+        runners = row[3]
+        distance_count = row[5]
+        nonnull_distances = row[6]
+
+        if (
+            distance_count > 1
+            or 0 < nonnull_distances < runners
+        ):
+            raise ValueError(
+                f"Inconsistent recorded distances for race: {race_key}"
+            )
+
+        eligible.append(row[:5])
+
+    return eligible
 
 
 def summarize_eligible_races(

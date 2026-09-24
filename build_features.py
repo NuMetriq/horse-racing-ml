@@ -13,6 +13,7 @@ from prior_form import (
     calculate_days_since_run,
     calculate_previous_position,
     calculate_previous_runner_count,
+    calculate_previous_distance,
 )
 from race_metrics import evaluate_race_scores
 
@@ -37,6 +38,9 @@ def save_feature_table(feature_rows, output_path: Path) -> None:
                     previous_position TEXT,
                     previous_runner_count INTEGER,
                     age INTEGER,
+                    distance_furlongs REAL,
+                    previous_distance_furlongs REAL,
+                    distance_change_furlongs REAL,
                     won INTEGER NOT NULL CHECK (won IN (0, 1)),
                     split TEXT NOT NULL
                         CHECK (split IN ('train', 'validation', 'test')),
@@ -51,13 +55,19 @@ def save_feature_table(feature_rows, output_path: Path) -> None:
                     date, course, off, horse,
                     prior_starts, prior_wins, prior_win_rate,
                     days_since_run, previous_position,
-                    previous_runner_count, age, won, split
+                    previous_runner_count, age,
+                    distance_furlongs, previous_distance_furlongs,
+                    distance_change_furlongs,
+                    won, split
                 )
                 VALUES (
                     :date, :course, :off, :horse,
                     :prior_starts, :prior_wins, :prior_win_rate,
                     :days_since_run, :previous_position,
-                    :previous_runner_count, :age, :won, :split
+                    :previous_runner_count, :age,
+                    :distance_furlongs, :previous_distance_furlongs,
+                    :distance_change_furlongs,
+                    :won, :split
                 )
                 """,
                 feature_rows,
@@ -143,7 +153,8 @@ def main() -> None:
             """
             SELECT
                 r.horse, r.date, r.course, r.off,
-                r.finish_position, races.runner_count, r.age
+                r.finish_position, races.runner_count, r.age,
+                races.distance_furlongs
             FROM runners AS r
             JOIN races
                 ON r.date = races.date
@@ -168,6 +179,10 @@ def main() -> None:
             history = [row[1:5] for row in horse_rows]
             runner_counts = [row[5] for row in horse_rows]
             ages = [row[6] for row in horse_rows]
+            distances = [row[7] for row in horse_rows]
+            previous_distances = calculate_previous_distance(
+                history, distances
+            )
             previous_runner_counts = calculate_previous_runner_count(
                 history, runner_counts
             )
@@ -180,12 +195,22 @@ def main() -> None:
                     history, window_days=args.window_days
                 )
 
-            for feature, gap, previous_position, previous_runner_count, age in zip(
+            for (
+                feature,
+                gap,
+                previous_position,
+                previous_runner_count,
+                age,
+                distance,
+                previous_distance,
+            ) in zip(
                 features,
                 gaps,
                 previous_positions,
                 previous_runner_counts,
                 ages,
+                distances,
+                previous_distances,
                 strict=True,
             ):
                 date, course, off, position, starts, wins, rate = feature
@@ -195,6 +220,13 @@ def main() -> None:
                     split = "validation"
                 else:
                     split = "test"
+
+                distance_change = (
+                    distance - previous_distance
+                    if distance is not None
+                    and previous_distance is not None
+                    else None
+                )
 
                 feature_rows.append(
                     {
@@ -211,6 +243,9 @@ def main() -> None:
                         "previous_position": previous_position,
                         "previous_runner_count": previous_runner_count,
                         "age": age,
+                        "distance_furlongs": distance,
+                        "previous_distance_furlongs": previous_distance,
+                        "distance_change_furlongs": distance_change,
                     }
                 )
 

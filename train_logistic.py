@@ -22,6 +22,7 @@ from feature_transforms import (
     encode_previous_relative_finish,
     encode_relative_finish_age,
     log_days_since_run,
+    encode_relative_finish_age_distance_change,
 )
 
 
@@ -52,7 +53,11 @@ def main() -> None:
     )
     parser.add_argument(
         "--feature-set",
-        choices=("relative_finish", "relative_finish_age"),
+        choices=(
+            "relative_finish",
+            "relative_finish_age",
+            "relative_finish_age_distance_change",
+        ),
         default="relative_finish_age",
         help="Model inputs to use (default: relative_finish_age)",
     )
@@ -144,23 +149,29 @@ def main() -> None:
             "previous_relative_finish",
         ]
 
-        if args.feature_set == "relative_finish_age":
-            source_features.append("age")
-            input_features.append("age")
-            encoder = encode_relative_finish_age
-            input_encoding = "relative_finish_age_v1"
-        else:
+        if args.feature_set == "relative_finish":
             encoder = encode_previous_relative_finish
             input_encoding = "previous_relative_finish_v1"
+        else:
+            source_features.append("age")
+            input_features.append("age")
+
+            if args.feature_set == "relative_finish_age":
+                encoder = encode_relative_finish_age
+                input_encoding = "relative_finish_age_v1"
+            else:
+                source_features.append("distance_change_furlongs")
+                input_features.append("distance_change_furlongs")
+                encoder = encode_relative_finish_age_distance_change
+                input_encoding = "relative_finish_age_distance_change_v1"
 
         source_count = len(source_features)
+        feature_columns = ", ".join(f'"{name}"' for name in source_features)
         print(f"Feature set: {args.feature_set}")
 
         training_rows = connection.execute(
-            """
-            SELECT prior_starts, prior_wins, prior_win_rate,
-                   days_since_run, previous_position,
-                   previous_runner_count, age, won
+            f"""
+            SELECT {feature_columns}, won
             FROM features
             WHERE date >= ? AND date < ?
             ORDER BY date, course, off, horse
@@ -224,21 +235,26 @@ def main() -> None:
         feature_names = input_features.copy()
         feature_names[3] = "log1p_days_since_run"
 
-        feature_names.extend(
-            [
-                "missing_win_rate",
-                "missing_days_since_run",
-                "missing_previous_finish_position",
-                "missing_previous_runner_count",
-                "missing_previous_relative_finish",
-            ]
-        )
+        imputer = pipeline.named_steps["imputer"]
 
-        if args.feature_set == "relative_finish_age":
-            feature_names.append("missing_age")
+        missing_label_overrides = {
+            "prior_win_rate": "missing_win_rate",
+        }
+
+        for index in imputer.indicator_.features_:
+            source_name = input_features[index]
+            feature_names.append(
+                missing_label_overrides.get(
+                    source_name,
+                    f"missing_{source_name}",
+                )
+            )
+
+        if "age" in input_features:
+            age_index = input_features.index("age")
             print(
                 "Training ages encoded as missing: "
-                f"{np.isnan(X_train[:, 8]).sum():,}"
+                f"{np.isnan(X_train[:, age_index]).sum():,}"
             )
 
         print(f"Coefficient labels: {len(feature_names)}")
@@ -256,11 +272,9 @@ def main() -> None:
             print(f"{name}: {coefficient:.6f}")
 
         validation_rows = connection.execute(
-            """
+            f"""
             SELECT date, course, off, horse,
-                   prior_starts, prior_wins, prior_win_rate,
-                   days_since_run, previous_position,
-                   previous_runner_count, age, won
+                   {feature_columns}, won
             FROM features
             WHERE date >= ? AND date < ?
             ORDER BY date, course, off, horse
@@ -353,7 +367,7 @@ def main() -> None:
                 "pipeline": pipeline,
                 "source_features": source_features,
                 "input_features": input_features,
-                "input_encoding": "relative_finish_age_v1",
+                "input_encoding": input_encoding,
                 "history_window_days": None,
                 "training_start": "2015-01-01",
                 "training_end_exclusive": args.train_end,

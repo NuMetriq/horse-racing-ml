@@ -116,3 +116,13 @@ def encode_relative_finish_age(row):
     )
 
     return (*existing_inputs, encode_age(age))
+
+def encode_relative_finish_age_distance_change(row):
+    """Convert eight source values into ten model inputs."""
+    existing_inputs = encode_relative_finish_age(row[:7])
+    change = row[7]
+
+    return (
+        *existing_inputs,
+        np.nan if change is None else float(change),
+    )

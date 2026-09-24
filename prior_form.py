@@ -174,3 +174,31 @@ def calculate_features_as_of(history, runner_counts, race_date):
         "previous_position": position,
         "previous_runner_count": runner_count,
     }
+
+def calculate_previous_distance(history, distances):
+    """Return distance from the most recent earlier recorded date.
+
+    If that date contains multiple starts, return None.
+    Do not skip backward over a missing previous distance.
+    """
+    previous_distance = None
+    results = []
+
+    paired_records = zip(history, distances, strict=True)
+
+    for _, records in groupby(
+        paired_records, key=lambda pair: pair[0][0]
+    ):
+        day_records = list(records)
+
+        results.extend(
+            [previous_distance] * len(day_records)
+        )
+
+        previous_distance = (
+            day_records[0][1]
+            if len(day_records) == 1
+            else None
+        )
+
+    return results

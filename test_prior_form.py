@@ -7,6 +7,7 @@ from prior_form import (
     calculate_previous_position,
     calculate_previous_runner_count,
     calculate_features_as_of,
+    calculate_previous_distance,
 )
 
 
@@ -131,6 +132,22 @@ class PriorFormTests(unittest.TestCase):
                 "previous_position": None,
                 "previous_runner_count": None,
             },
+        )
+
+    def test_previous_distance_uses_only_unambiguous_earlier_date(self):
+        history = [
+            ("2023-01-01", "Course A", "1:00", "2"),
+            ("2023-01-10", "Course A", "1:00", "1"),
+            ("2023-01-10", "Course B", "3:00", "3"),
+            ("2023-01-20", "Course A", "1:00", "2"),
+            ("2023-02-01", "Course A", "1:00", "4"),
+            ("2023-02-10", "Course A", "1:00", "1"),
+        ]
+        distances = [8.0, 10.0, 12.0, None, 7.0, 9.0]
+
+        self.assertEqual(
+            calculate_previous_distance(history, distances),
+            [None, 8.0, 8.0, None, None, 7.0],
         )
 
 if __name__ == "__main__":

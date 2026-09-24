@@ -261,12 +261,40 @@ def main():
             "evidence",
         ]
 
-        with review_path.open("x", encoding="utf-8", newline="") as file:
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(review_rows)
+        if review_path.exists():
+            print(f"Existing review preserved: {review_path}")
+        else:
+            with review_path.open("x", encoding="utf-8", newline="") as file:
+                writer = csv.DictWriter(file, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(review_rows)
 
-        print(f"Saved {len(review_rows):,} review candidates to: {review_path}")
+            print(
+                f"Saved {len(review_rows):,} review candidates to: "
+                f"{review_path}"
+            )
+
+        distance_conflicts = connection.execute(
+            """
+            SELECT date, course, off,
+                   COUNT(DISTINCT dist) AS distinct_distances
+            FROM data
+            WHERE type = 'Flat'
+              AND date >= '2015-01-01'
+              AND date < '2024-01-01'
+            GROUP BY date, course, off
+            HAVING COUNT(DISTINCT dist) > 1
+            ORDER BY date, course, off
+            """
+        ).fetchall()
+
+        print(
+            "\nTraining race groups with conflicting distances: "
+            f"{len(distance_conflicts):,}"
+        )
+
+        for row in distance_conflicts[:20]:
+            print(row)
 
     finally:
         connection.close()

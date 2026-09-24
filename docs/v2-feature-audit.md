@@ -402,3 +402,69 @@ It does not establish that all classification errors have been
 
 found or that later periods have been audited.
 
+
+
+\### Distance-change experiment
+
+
+
+Added signed distance change in furlongs: current race distance
+
+minus the horse's previous recorded race distance. Previous-race
+
+information uses only earlier dates; unavailable or ambiguous
+
+previous distances remain missing.
+
+
+
+Both models use the same reviewed dataset, with 25 race exclusions.
+
+Each model is fitted on data from 2015 through the year preceding
+
+its evaluation year.
+
+
+
+| Evaluation year | Age baseline log loss | With distance change | Improvement |
+
+|---|---:|---:|---:|
+
+| 2021 | 2.135242 | 2.134419 | +0.000823 |
+
+| 2022 | 2.129812 | 2.129207 | +0.000605 |
+
+| 2023 | 2.153239 | 2.152865 | +0.000374 |
+
+| 2024 | 2.157350 | 2.156699 | +0.000651 |
+
+
+
+Positive improvement means lower race log loss for the candidate.
+
+
+
+For 2024, a paired bootstrap by race date used 363 dates,
+
+10,000 resamples, and seed 42. The 95% percentile interval for
+
+mean improvement was \[+0.000139, +0.001174].
+
+Eight months improved and four worsened.
+
+
+
+Decision: retain signed distance change. Its contribution is
+
+small but positive across all four annual evaluations.
+
+
+
+These are development comparisons, not a new untouched test.
+
+The bootstrap does not account for repeated feature selection,
+
+dependence across dates, or model-fitting uncertainty.
+
+No betting-profitability claim follows from these results.
+

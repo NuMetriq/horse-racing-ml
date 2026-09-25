@@ -18,6 +18,51 @@ from feature_transforms import (
 from calibrate_probabilities import adjust_probabilities
 
 
+def build_runner_features(
+    connection, horse, age, race_date, distance
+):
+    """Construct source features using only earlier recorded dates."""
+    rows = connection.execute(
+        """
+        SELECT
+            r.date, r.course, r.off, r.finish_position,
+            races.runner_count, races.distance_furlongs
+        FROM runners AS r
+        JOIN races
+            ON r.date = races.date
+            AND r.course = races.course
+            AND r.off = races.off
+        WHERE r.horse = ? AND r.date < ?
+        ORDER BY r.date, r.course, r.off
+        """,
+        (horse, race_date),
+    ).fetchall()
+
+    history = [row[:4] for row in rows]
+    runner_counts = [row[4] for row in rows]
+    distances = [row[5] for row in rows]
+
+    features = calculate_features_as_of(
+        history,
+        runner_counts,
+        race_date,
+    )
+
+    previous_distance = calculate_previous_distance(
+        history + [(race_date, "", "", None)],
+        distances + [None],
+    )[-1]
+
+    features["age"] = age
+    features["distance_change_furlongs"] = (
+        distance - previous_distance
+        if previous_distance is not None
+        else None
+    )
+
+    return features, previous_distance
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Build boosting features for a supplied racecard."
@@ -74,46 +119,13 @@ def main():
         for runner in runners:
             horse = runner["horse"]
 
-            rows = connection.execute(
-                """
-                SELECT
-                    r.date, r.course, r.off, r.finish_position,
-                    races.runner_count, races.distance_furlongs
-                FROM runners AS r
-                JOIN races
-                    ON r.date = races.date
-                    AND r.course = races.course
-                    AND r.off = races.off
-                WHERE r.horse = ? AND r.date < ?
-                ORDER BY r.date, r.course, r.off
-                """,
-                (horse, race_date),
-            ).fetchall()
-
-            history = [row[:4] for row in rows]
-            runner_counts = [row[4] for row in rows]
-            distances = [row[5] for row in rows]
-
-            features = calculate_features_as_of(
-                history,
-                runner_counts,
+            features, previous_distance = build_runner_features(
+                connection,
+                horse,
+                runner["age"],
                 race_date,
+                distance,
             )
-
-            # Append a target-date placeholder to retrieve the distance
-            # known before that date using the existing historical rule.
-            previous_distance = calculate_previous_distance(
-                history + [(race_date, "", "", None)],
-                distances + [None],
-            )[-1]
-
-            features["age"] = runner["age"]
-            features["distance_change_furlongs"] = (
-                distance - previous_distance
-                if previous_distance is not None
-                else None
-            )
-
             features_by_horse[horse] = features
 
             print(

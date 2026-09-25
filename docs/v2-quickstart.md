@@ -167,7 +167,7 @@ See `v2-feature-audit.md` for comparisons and limitations.
 ## Run focused tests
 
 ```powershell
-python -m unittest test_feature_transforms test_prior_form test_race_metrics
+python -m unittest test_distance test_feature_transforms test_prior_form test_race_metrics test_calibration
 ```
 
 The first frozen baseline has been evaluated on the reserved test

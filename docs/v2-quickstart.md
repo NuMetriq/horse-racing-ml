@@ -170,6 +170,9 @@ See `v2-feature-audit.md` for comparisons and limitations.
 python -m unittest test_distance test_feature_transforms test_prior_form test_race_metrics test_calibration test_racecard_inference
 ```
 
+The same focused tests run through GitHub Actions on pushes to
+`v2-rebuild-master` and on pull requests.
+
 The first frozen baseline has been evaluated on the reserved test
 period. See v2-data-notes.md for results and evaluation rules.
 

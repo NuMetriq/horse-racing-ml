@@ -858,3 +858,51 @@ use would require the active field available at prediction time,
 
 with explicit handling of withdrawals.
 
+
+
+\### Supplied-racecard inference replay
+
+
+
+Integrated the selected ten-input initial boosting model and frozen
+
+calibration into predict\_boosting\_racecard.py.
+
+
+
+The predictor accepts a race date, distance, and CSV containing
+
+exact horse names and current ages. Historical features use only
+
+records from dates before the supplied race date.
+
+
+
+A replay of 2024-01-01, Ascot (AUS), 7:50 verified:
+
+
+
+\- All eight source features matched the prepared feature table
+
+&#x20; for all ten runners: 80 comparisons passed.
+
+\- Uncalibrated probabilities matched the validation export exactly.
+
+\- Calibrated probabilities matched the calibrated export exactly.
+
+\- Final probabilities summed to one.
+
+
+
+The replay used racecard attributes extracted from historical data.
+
+It establishes agreement for this example, not general live-data
+
+availability or comprehensive inference validation.
+
+
+
+Runner lists must contain the complete active field. The saved
+
+calibration applies to the selected initial boosting model.
+

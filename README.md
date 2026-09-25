@@ -1,401 +1,205 @@
 # Horse Racing Outcome Prediction
 
-A step-by-step rebuild of a horse-racing prediction workflow, with
-chronological feature construction, race-level evaluation, and
-prediction from supplied runner lists.
+An end-to-end data science project for estimating each runner’s
+probability of winning a horse race.
 
-## Start here: v2 baseline
+The v2 rebuild emphasizes data auditing, chronological feature
+construction, reproducible experiments, probability calibration,
+and honest reporting of model limitations.
 
-The current rebuild is on the `v2-rebuild-master` branch.
+**Current development model:** histogram gradient boosting with
+ten encoded inputs and a frozen race-level calibration adjustment.
 
-- [V2 quickstart](docs/v2-quickstart.md): setup, data preparation,
-  training, evaluation, and prediction commands.
-- [V2 data notes](docs/v2-data-notes.md): selection rules, experiments,
-  results, and limitations.
+**2024 development race log loss: 2.130549**, compared with
+2.253199 for uniform probabilities. Lower is better. This is not
+an untouched test result or evidence of betting profitability.
 
-V2 uses logistic regression with historical horse-form features:
-prior starts and wins, prior win rate, days since the previous run,
-previous finishing position, previous field size, and relative finish.
+## Start here
 
-The pipeline applies a logarithmic gap transformation, imputes missing
-values with indicators, and scales inputs. Predicted runner scores
-are normalized to sum to one within each race.
+The rebuild is on the `v2-rebuild-master` branch.
 
-Historical features use records from strictly earlier dates.
-Earlier test-period results may inform later test-period features;
-the fitted model remains unchanged.
+- [V2 quickstart](docs/v2-quickstart.md): environment setup,
+  preparation, training, evaluation, and calibration commands.
+- [Data notes](docs/v2-data-notes.md): data structure, selection
+  rules, historical experiments, and limitations.
+- [Feature and model audit](docs/v2-feature-audit.md): feature
+  investigations, temporal comparisons, tuning, calibration,
+  and rejected experiments.
+- [Race-type review](docs/v2-race-type-review.csv): reviewed
+  race classifications and supporting evidence.
+
+V2 uses the root-level Python scripts and `requirements-v2.txt`.
+The older `src/hrml` implementation belongs to v1.
+
+## Prediction task
+
+For each eligible race, estimate a win probability for every
+runner, with probabilities summing to one across the field.
+
+Models are trained as binary runner classifiers. Their outputs
+are normalized within each race, then evaluated using **race
+log loss**: the mean negative natural logarithm of the probability
+assigned to the recorded winner.
+
+Training therefore uses a runner-level objective; model selection
+and evaluation use a race-level metric.
 
 ## Data and scope
 
-The frozen baseline uses version 118 of the Kaggle dataset
-[Horse Racing Results](https://www.kaggle.com/datasets/deltaromeo/horse-racing-results-ukireland-2015-2025).
+The documented experiments use version 118 of the Kaggle
+[Horse Racing Results dataset](https://www.kaggle.com/datasets/deltaromeo/horse-racing-results-ukireland-2015-2025).
 
-Despite the dataset title, its records include international courses.
-The prepared subset contains flat races with at least two runners,
-one recorded winner, and runner counts matching the reported field size.
-Dead heats and incomplete or inconsistent race groups are excluded.
+Despite its title, the dataset includes international courses.
+The snapshot ends on 2026-05-27.
 
-| Split | Dates | Races | Runners |
+Eligible race groups must:
+
+- Be labelled `Flat`, subject to documented review exclusions.
+- Have at least two runners and exactly one recorded winner.
+- Have observed runner counts matching a consistent reported
+  field size.
+
+Dead heats and incomplete or inconsistent groups are excluded.
+A manual review excluded 25 eligible race groups containing
+267 runner rows that were outside the intended flat-racing scope.
+
+| Stored split | Dates | Races | Runners |
 |---|---|---:|---:|
-| Training | 2015–2023 | 98,625 | 989,073 |
+| Training | 2015–2023 | 98,600 | 988,806 |
 | Validation | 2024 | 11,637 | 117,378 |
-| Test | 2025-01-01 through 2026-05-27 | 15,872 | 159,207 |
+| Previously examined test period | 2025-01-01 through 2026-05-27 | 15,872 | 159,207 |
+| Total | | 126,109 | 1,265,391 |
 
-## Frozen baseline results
+Data auditing identified reused source race IDs, an embedded
+header row, missing-value conventions, ambiguous outcomes,
+race-type inconsistencies, and incomplete historical coverage.
 
-Race log loss is the mean negative natural logarithm of the
-probability assigned to each race's winner. Lower is better.
+Race groups use `(date, course, off)` rather than assuming source
+race IDs are unique. This remains a dataset-specific identifier,
+not a universal race identity.
 
-| Evaluation period | Model race log loss | Uniform race log loss |
+## Features and chronological evaluation
+
+The selected model uses:
+
+- Prior recorded starts, wins, and win rate.
+- Days since the previous recorded race.
+- Previous finish position and a nonnumeric result-code indicator.
+- Previous field size and relative finishing position.
+- Age.
+- Signed distance change from the previous recorded race.
+
+Historical features use strictly earlier dates. Same-day results
+are withheld, and ambiguous previous-race information remains
+missing. History is limited to the selected dataset; it is not
+necessarily a horse’s complete career.
+
+Annual comparisons train on preceding years and evaluate the next
+calendar year. Earlier evaluation-period results may inform later
+historical features, while the fitted model stays fixed.
+
+The boosting model handles missing inputs natively. It does not
+use the imputation, scaling, or logarithmic gap transformation
+used by the logistic benchmark.
+
+## Model development
+
+Under fixed initial boosting settings, boosting improved over
+logistic regression in all four annual comparisons.
+
+| Evaluation year | Logistic regression | Initial boosting |
 |---|---:|---:|
-| Validation | 2.160138 | 2.253199 |
-| Test | 2.149611 | 2.245443 |
-
-The model was selected using validation results and then evaluated
-unchanged on the test period. That test period has now been used.
-
-These results establish improvement over uniform probabilities.
-They do not establish profitability or superiority to market odds.
-
-## Prediction workflow
-
-V2 can predict an existing race from prepared features or construct
-features for a supplied date and runner list using earlier history.
-Predictions can be saved as JSON with source features and coverage details.
-
-Runner lists must contain the complete field and exact horse names.
-Missing history may reflect incomplete coverage or a name mismatch,
-rather than a horse's debut. The version-118 snapshot ends on 2026-05-27.
-
-See the quickstart for the root-level Python scripts and
-`requirements-v2.txt`. Generated databases and model files remain local.
-
----
-
-## Legacy v1 documentation
-
-Everything below describes the earlier v1 implementation, not the
-current v2 workflow. Its feature-availability claims and reported
-metrics have not been revalidated as part of this rebuild.
-Do not compare its scores directly with the v2 results above.
-
-The pre-rebuild work is preserved on `archive/pre-rebuild-work`
-and under the `pre-v2-rebuild` tag.
-
-## Overview
-
-This project predicts **win probabilities for each runner in a race** using only **pre-race information** and **strict temporal validation**.
-
-Horse racing presents several structural challenges for modeling:
-
-- Each race contains multiple dependent observations (runners)
-- Exactly one winner exists per race
-- Public markets already encode strong prior information
-- Naive random cross-validation introduces severe data leakage
-
-This repository focuses on **correct methodology**, **probability calibration**, and **race-level evaluation**, not wagering or profit claims.
-
----
-
-## Key Features
-
-- **Leakage-safe feature construction**
-  - All historical aggregates (horse, jockey, trainer form) are computed strictly from past races only
-- **Time-aware evaluation**
-  - Train / validation / test splits are based on race date (no random shuffling)
-- **Race-aware objectives**
-  - Winner only probability modeling (race-softmax)
-  - Race-level ordering models (pairwise ranking, Plackett-Luce top-K)
-- **Proper evaluation**
-  - Log loss, Brier, ECE, plus race-aware ranking metrics (MRR, NDCG@K, mean winner rank)
-- **Reproducible pipeline**
-  - Modular ingestion, feature building, training, and evaluation scripts
-- **Guardrails against leakage**
-  - Deterministic feature allowlist + strict "unknown numeric feature" checks
-
----
-
-## Modeling Approaches
-
-This repo currently supports three complementary approaches:
-
-1. **Race Softmax (winner probability; v1.1.x+)**
-   - Custom race-level objective that directly optimizes a multinomial-like win target per race.
-   - Outputs `p_win` that sums to 1 within a race by construction.
-
-2. **Pairwise Learning-to-Rank**
-   - XGBoost `rank:pairwise` grouped by race.
-   - Produces a **ranking score** (and a probability-like normalization `p_rank` for diagnostics).
-
-3. **Plackett–Luce (race outcome structure; v1.2.x)**
-   - Custom top-K Plackett–Luce objective using finish-order labels.
-   - Produces stage-1 `p_win_raw` via race softmax on scores, with optional **temperature scaling** for calibration discipline.
-
-A short comparison write-up is in:
-- `outputs/reports/model_comparison.md`
-
-A model card (assumptions/scope/limitations) is in:
-- `docs/model_card.md`
-
----
-
-## Data Source
-
-**Kaggle Dataset:** *Horse Racing Results – UK & Ireland (2015–2025)*  
-https://www.kaggle.com/datasets/deltaromeo/horse-racing-results-ukireland-2015-2025
-
-The raw dataset is a SQLite database and is **not included** in this repository due to size and licensing constraints.
-
-Place the SQLite file in:
-
-```bash
-data/raw/
-```
-
----
-
-## Feature Summary
-
-Only information available **before post time** is used.
-
-### Race context
-- course
-- distance (converted to furlongs)
-- going (track condition)
-- field size
-- race class / type
-
-### Runner attributes
-- post position (draw)
-- carried weight
-- age / sex
-
-### Ratings (pre-race)
-- Official Rating (OR)
-- Racing Post Rating (RPR)
-- Topspeed (TS)
-
-### Historical form (leakage-safe)
-- recent finishing position trends
-- win rates over last N starts
-- days since last run
-- jockey and trainer expanding win rates
-
-No post-race information (margins, comments, times, etc.) is used.
-
----
-
-## Train / Validation / Test Split
-
-All splits are **time-based**:
-- **Training:** races up to 2022-12-31
-- **Validation:** races during 2023–2024 (up to **2024-12-31**)
-- **Test:** races after **2024-12-31**
-
-This avoids forward-looking leakage and simulates real deployment.
-
----
-
-## Evaluation
-
-Evaluation is performed at the **race level** (not per-runner independently).
-
-**Win-probability quality (when applicable)**
-- Log loss
-- Brier score
-- ECE (Expected Calibration Error)
-
-**Race-aware ranking quality**
-- MRR
-- NDCG@K (K = 3, 5)
-- Mean winner rank
-- Winner-in-topK hit rates
-
-Common artifacts:
-- `outputs/reports/metrics.md` / `outputs/reports/metrics.json` (when generated)
-- `outputs/figures/ calibration plots (when generated)
-- `outputs/reports/metrics_ranking_*.md|json`
-
----
-
-## Results (Held-out Test Set)
-
-### **Race SoftMax (winner probability baseline)**
-
-- Logloss: **0.0845**
-- Brier: **0.0246**
-- ECE: **0.0036**
-- Top-1 accuracy (per race): **~0.832**
-- Top-3 hit rate: **~0.972**
-- Mean winner rank: **1.304**
-- NDCG@3: **0.9171**
-- NDCG@5: **0.9239**
-- MRR: **0.9031**
-
-### **Plackett-Luce (race outcome model; calibrated)
-
-- Mean winner rank: **1.346**
-- MRR: **0.8994**
-- NDCG@3: **0.9120**
-- NDCG@5: **0.9186**
-- Winner top-3: **0.9655**
-- Winner top-5: **0.9816**
-- Overall ECE: **0.0052**
-
-(See `outputs/reports/model_comparison.md` for a side-by-side summary.)
-
----
-
-## Repository Structure
-
-```
-
-horse-racing-ml/
-├── src/
-│ └── hrml/
-│ ├── ingest/ # raw data inspection & normalization
-│ ├── features/ # leakage-safe feature construction
-│ ├── models/ # training & hyperparameter tuning
-│ └── eval/ # evaluation & plotting
-├── configs/
-├── notebooks/
-├── docs/
-│ └── model_card.md
-├── outputs/ # generated artifacts (mostly ignored; reports allowlisted)
-├── requirements.txt
-├── pyproject.toml
-└── README.md
-
-Raw data (`data/raw`) and most derived artifacts are excluded via `.gitignore`. Selected small reports are allowlisted under `outputs/reports/`.
-
-```
-
----
-
-## How to Reproduce
-
-### 1. Create a virtual environment
-
-```bash
-
-python -m venv .venv
-
-source .venv/bin/activate   # Windows: .\\.venv\\Scripts\\Activate
-
-```
-
-### 2. Install dependencies
-
-```bash
-
-pip install -r requirements.txt
-
-```
-
-### 3. Download the dataset
-
-Manually download the Kaggle dataset and place the SQLite file in:
-
-```bash
-
-data/raw/
-
-```
-
-### 4. Run the pipeline
-
-```bash
-
-python -m hrml.ingest.inspect_raw
-python -m hrml.ingest.normalize
-python -m hrml.features.build_features
-
-```
-
-Then train one (or all) models:
-
-**Race SoftMax (winner probabilities)**
-
-```bash
-# full training
-python -m hrml.models.train_xgb_race_softmax
-
-# fast iteration (fewer rounds; skips ablations)
-python -m hrml.models.train_xgb_race_softmax --fast-dev
-
-# base model only (skip ablations)
-python -m hrml.models.train_xgb_race_softmax --base-only
-
-# reuse existing artifacts (prevents accidental full retrain)
-python -m hrml.models.train_xgb_race_softmax --reuse-existing
-```
-
-**Pairwise Ranking**
-
-```bash
-python -m hrml.models.train_xgb_pairwise_rank
-python -m hrml.models.train_xgb_pairwise_rank --fast-dev
-python -m hrml.models.train_xgb_pairwise_rank --reuse-existing
-
-# CLI consistency only (no-op for pairwise)
-python -m hrml.models.train_xgb_pairwise_rank --base-only
-```
-
-**Plackett-Luce (top-K race outcome model)**
-
-```bash
-# full training (defaults: --top-k 3, --mc-samples 200, temperature scaling enabled)
-python -m hrml.models.train_xgb_plackett_luce
-
-# fast iteration
-python -m hrml.models.train_xgb_plackett_luce --fast-dev
-
-# reuse existing artifacts (prevents accidental full retrain)
-python -m hrml.models.train_xgb_plackett_luce --reuse-existing
-
-# customize PL objective & Monte Carlo extras
-python -m hrml.models.train_xgb_plackett_luce --top-k 3 --mc-samples 0
-```
-
----
-
-## Validation & Robustness
-
-Robustness is validated via:
-- Feature ablation experiments (race-softmax)
-- Strict OOS evaluation on held-out races
-- Probability calibration diagnostics
-- Race-aware ranking metrics
-
-Ablation metrics:
-- `outputs/reports/ablation_softmax_metrics.md`
-
----
-
-## Limitations & Future Work
-
-- No betting or profitability simulation is performed
-- Market baselines are treated as diagnostics, not trading signals.
-- Expected rank / place probabilities (PL MC sampling) are approximate and may be disabled (`--mc-samples 0`).
-
-Possible next steps:
-- richer baselines (ratings-only, odds-only)
-- more extensive calibration stratification + reliability plots
-- automated "model comparison" report generation from metrics JSONs
-- stability checks across field size / distance / class regimes
-
----
-
-## Versioning
-
-- v1.0.0 -- Leakage-safe pipeline, probabilistic modeling, and proper evaluation
-- v1.0.1 -- Sanity checks, feature ablations, and validation artifacts
-- v1.1.x -- Race-SoftMax objective + improved evaluation discipline
-- v1.2.x **(dev)** -- Outcome-structure models (pairwise ranking, Plackett-Luce), ranking metrics, unified trainer CLI
-
----
-
-## License
-
-This project is provided for educational and portfolio purposes only.
-
+| 2021 | 2.134419 | 2.116284 |
+| 2022 | 2.129207 | 2.111592 |
+| 2023 | 2.152865 | 2.132037 |
+| 2024 | 2.156699 | 2.135187 |
+
+A bounded Optuna search evaluated 20 parameter combinations across
+2021–2023. The selected configuration improved 2024 loss slightly,
+but its paired date-bootstrap interval included zero. It remains
+a comparison candidate rather than the selected configuration.
+
+Adding current field size was also tested. It worsened mean
+2021–2023 loss and 2024 loss, so it was not adopted.
+
+## Probability calibration
+
+A single exponent adjusts the initial boosting probabilities:
+
+`q_i = p_i^gamma / sum_j(p_j^gamma)`
+
+The exponent was fitted using chronological predictions for
+2021–2023, then frozen before application to 2024.
+Its value is approximately **1.237228322**.
+
+| 2024 comparison | Race log loss |
+|---|---:|
+| Uniform probabilities | 2.253199 |
+| Logistic regression | 2.156699 |
+| Initial boosting | 2.135187 |
+| Optuna-tuned boosting | 2.134307 |
+| Initial boosting with frozen calibration | **2.130549** |
+
+Calibration improved initial boosting by **0.004638**.
+A paired bootstrap over 363 race dates, using 10,000 resamples
+and seed 42, gave a 95% percentile interval of
+**[+0.003014, +0.006257]**. Eleven of twelve months improved.
+
+The adjustment preserves runner rankings, so it does not improve
+winner-selection accuracy. Pooled probability bins showed closer
+agreement with observed win rates, but subgroup limitations remain.
+
+## Error analysis and limitations
+
+For runners without earlier recorded history, mean calibrated
+probability was **8.65%**, versus an observed win rate of **7.86%**.
+Good pooled calibration therefore does not establish calibration
+within every subgroup.
+
+Other limitations include:
+
+- Historical coverage and exact-name matching affect features.
+- Manual race-type review is not an exhaustive correctness guarantee.
+- Historical result data do not establish when every field became
+  available in a live prediction workflow.
+- 2024 has been examined repeatedly during development.
+- The period labelled `test` was examined in earlier experiments
+  and is no longer an untouched holdout.
+- Date-bootstrap intervals do not account for model selection,
+  fitting uncertainty, or dependence between different dates.
+
+An earlier frozen model underperformed normalized Betfair starting
+prices on a matched subset. The current model has not established
+superiority to market odds or betting profitability.
+
+## Reproduce the current workflow
+
+Follow the [quickstart](docs/v2-quickstart.md) to:
+
+1. Install the pinned v2 dependencies.
+2. Prepare version-118 data with the reviewed exclusions.
+3. Build chronological features.
+4. Train and save the initial boosting model.
+5. Export 2024 race-normalized predictions.
+6. Apply the saved calibration exponent.
+7. Run the focused tests.
+
+Selected JSON experiment reports and the exported Optuna trial
+history are tracked in Git. Generated databases, model files,
+and prediction CSVs remain local and are generally ignored.
+
+Earlier supplied-racecard prediction scripts were built for older
+feature configurations. The documented current workflow evaluates
+historical predictions; live inference with the selected model
+still requires integration and validation.
+
+## Legacy v1
+
+The earlier implementation is preserved on
+`archive/pre-rebuild-work` and under the `pre-v2-rebuild` tag.
+
+Its reported metrics and feature-availability claims have not been
+revalidated in this rebuild and should not be compared directly
+with v2 results.
+
+This repository is an educational and portfolio project.

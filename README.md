@@ -188,10 +188,14 @@ Selected JSON experiment reports and the exported Optuna trial
 history are tracked in Git. Generated databases, model files,
 and prediction CSVs remain local and are generally ignored.
 
-Earlier supplied-racecard prediction scripts were built for older
-feature configurations. The documented current workflow evaluates
-historical predictions; live inference with the selected model
-still requires integration and validation.
+The selected model is available through `predict_boosting_racecard.py`,
+which accepts a date, distance, and CSV of horse names and current
+ages. It constructs historical features and applies frozen calibration.
+
+A ten-runner historical replay matched all source features and both
+uncalibrated and calibrated validation probabilities exactly.
+See the quickstart for the example command. Live data sourcing,
+freshness checks, and broader inference validation remain future work.
 
 ## Legacy v1
 

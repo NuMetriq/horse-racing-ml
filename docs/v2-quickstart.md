@@ -253,3 +253,56 @@ python evaluate_saved.py data/processed/v2_features_all_splits.db outputs/models
 
 Expected: 15,872 races, model log loss 2.149611, and uniform
 log loss 2.245443.
+
+## Predict a supplied racecard
+
+Use a CSV with exactly these columns:
+
+```csv
+horse,age
+Example Horse A,5
+Example Horse B,
+```
+
+Horse names must match the history database exactly. Ages describe
+the prediction date; leave unavailable ages blank. Supply the
+complete active field, with at least two runners and no duplicates.
+
+Replay the included historical Ascot racecard:
+
+```powershell
+python predict_boosting_racecard.py data/processed/v2_flat_reviewed_distance_v2.db --model outputs/models/v2_hist_boosting_initial.pkl --calibration outputs/reports/v2_initial_boosting_calibration.json --date 2024-01-01 --distance 1m1f --runners-file examples/racecards/racecard_ascot_2024-01-01_0750.csv --report outputs/predictions/ascot_boosting_calibrated.json
+```
+
+The report path must not already exist. Choose a new path if the
+example has already been run.
+
+The predictor constructs historical features from strictly earlier
+dates, supplies current age and distance from the racecard, and
+applies the saved model followed by frozen calibration.
+
+The JSON report includes source features, uncalibrated and final
+probabilities, model and history paths, and calibration details.
+
+For this replay:
+
+- Runner count: 10
+- Probability total: 1.0
+- All 80 source-feature comparisons matched the prepared table.
+- Uncalibrated and calibrated probabilities matched their
+  respective validation exports exactly.
+
+The Ascot fixture was extracted from historical data. This verifies
+one replay; it does not establish live racecard availability or
+comprehensive inference correctness.
+
+Use the selected initial boosting model with its matching
+calibration file. Configuration checks do not uniquely identify
+a model's training data.
+
+For new racecards, check historical-data freshness and update the
+runner list after withdrawals. Missing recorded history does not
+necessarily mean a horse has never raced.
+
+The fictional racecard_input_example.csv is for checking CSV input
+only, not for meaningful predictions.

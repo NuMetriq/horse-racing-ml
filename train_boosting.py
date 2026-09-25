@@ -19,6 +19,7 @@ from feature_transforms import (
     encode_previous_relative_finish,
     encode_relative_finish_age,
     encode_relative_finish_age_distance_change,
+    encode_relative_finish_age_distance_change_field,
 )
 
 
@@ -53,6 +54,7 @@ def main() -> None:
             "relative_finish",
             "relative_finish_age",
             "relative_finish_age_distance_change",
+            "relative_finish_age_distance_change_field",
         ),
         default="relative_finish_age",
         help="Model inputs to use (default: relative_finish_age)",
@@ -172,8 +174,19 @@ def main() -> None:
             else:
                 source_features.append("distance_change_furlongs")
                 input_features.append("distance_change_furlongs")
-                encoder = encode_relative_finish_age_distance_change
-                input_encoding = "relative_finish_age_distance_change_v1"
+
+                if args.feature_set == "relative_finish_age_distance_change":
+                    encoder = encode_relative_finish_age_distance_change
+                    input_encoding = "relative_finish_age_distance_change_v1"
+                else:
+                    source_features.append("current_runner_count")
+                    input_features.append("current_runner_count")
+                    encoder = (
+                        encode_relative_finish_age_distance_change_field
+                    )
+                    input_encoding = (
+                        "relative_finish_age_distance_change_field_v1"
+                    )
 
         source_count = len(source_features)
         feature_columns = ", ".join(f'"{name}"' for name in source_features)

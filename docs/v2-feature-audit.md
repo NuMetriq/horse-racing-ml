@@ -798,3 +798,63 @@ Exact runner keys and winner labels were checked against the
 
 feature database. No subgroup correction was fitted to 2024.
 
+
+
+\### Current field-size experiment
+
+
+
+Added current\_runner\_count as an eleventh model input.
+
+Compared uncalibrated models using the same reviewed data and
+
+fixed initial boosting settings, including 200 iterations.
+
+
+
+| Evaluation year | Baseline loss | With current field size | Improvement |
+
+|---|---:|---:|---:|
+
+| 2021 | 2.116284 | 2.118864 | -0.002580 |
+
+| 2022 | 2.111592 | 2.111168 | +0.000424 |
+
+| 2023 | 2.132037 | 2.131543 | +0.000494 |
+
+| 2024 | 2.135187 | 2.136522 | -0.001335 |
+
+
+
+Positive improvement means lower loss for the candidate.
+
+
+
+The feature improved two years and worsened two. Equally weighted
+
+mean loss across 2021–2023 worsened by approximately 0.000554.
+
+The 2024 comparison also worsened.
+
+
+
+Decision: do not adopt current field size under this configuration.
+
+Retain the ten-input initial boosting model and its frozen
+
+calibration. Preserve this experiment as a negative result.
+
+
+
+This does not establish that field size is universally unhelpful.
+
+No additional tuning or candidate-specific calibration was performed.
+
+
+
+The historical field count represents actual starters. Any future
+
+use would require the active field available at prediction time,
+
+with explicit handling of withdrawals.
+

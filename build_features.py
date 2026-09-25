@@ -42,6 +42,8 @@ def save_feature_table(feature_rows, output_path: Path) -> None:
                     previous_distance_furlongs REAL,
                     distance_change_furlongs REAL,
                     won INTEGER NOT NULL CHECK (won IN (0, 1)),
+                    current_runner_count INTEGER NOT NULL
+                        CHECK (current_runner_count >= 2),
                     split TEXT NOT NULL
                         CHECK (split IN ('train', 'validation', 'test')),
                     PRIMARY KEY (date, course, off, horse)
@@ -57,7 +59,7 @@ def save_feature_table(feature_rows, output_path: Path) -> None:
                     days_since_run, previous_position,
                     previous_runner_count, age,
                     distance_furlongs, previous_distance_furlongs,
-                    distance_change_furlongs,
+                    distance_change_furlongs, current_runner_count,
                     won, split
                 )
                 VALUES (
@@ -66,7 +68,7 @@ def save_feature_table(feature_rows, output_path: Path) -> None:
                     :days_since_run, :previous_position,
                     :previous_runner_count, :age,
                     :distance_furlongs, :previous_distance_furlongs,
-                    :distance_change_furlongs,
+                    :distance_change_furlongs, :current_runner_count,
                     :won, :split
                 )
                 """,
@@ -203,6 +205,7 @@ def main() -> None:
                 age,
                 distance,
                 previous_distance,
+                current_runner_count,
             ) in zip(
                 features,
                 gaps,
@@ -211,6 +214,7 @@ def main() -> None:
                 ages,
                 distances,
                 previous_distances,
+                runner_counts,
                 strict=True,
             ):
                 date, course, off, position, starts, wins, rate = feature
@@ -246,6 +250,7 @@ def main() -> None:
                         "distance_furlongs": distance,
                         "previous_distance_furlongs": previous_distance,
                         "distance_change_furlongs": distance_change,
+                        "current_runner_count": current_runner_count,
                     }
                 )
 

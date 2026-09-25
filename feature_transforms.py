@@ -126,3 +126,28 @@ def encode_relative_finish_age_distance_change(row):
         *existing_inputs,
         np.nan if change is None else float(change),
     )
+
+def encode_relative_finish_age_distance_change_field(row):
+    """Convert nine source values into eleven model inputs."""
+    if len(row) != 9:
+        raise ValueError("Expected nine source values")
+
+    existing_inputs = encode_relative_finish_age_distance_change(
+        row[:8]
+    )
+
+    if row[8] is None:
+        raise ValueError("Current runner count is required")
+
+    count = float(row[8])
+
+    if (
+        not np.isfinite(count)
+        or not count.is_integer()
+        or count < 2
+    ):
+        raise ValueError(
+            "Current runner count must be an integer of at least two"
+        )
+
+    return (*existing_inputs, count)

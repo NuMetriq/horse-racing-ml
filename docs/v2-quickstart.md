@@ -50,50 +50,119 @@ Set this variable to the downloaded raceform.db file:
 $rawDatabase = Join-Path $env:USERPROFILE ".cache\kagglehub\datasets\deltaromeo\horse-racing-results-ukireland-2015-2025\versions\118\form_2015-present\form_2015-present\raceform.db"
 ```
 
-Create the prepared dataset and all-history features:
+Create the prepared dataset using the version-controlled race review:
 
 ```powershell
-python prepare_data.py $rawDatabase --output data/processed/v2_flat_competitive.db
-python build_features.py data/processed/v2_flat_competitive.db --alpha 30 --features-output data/processed/v2_features_all_splits.db
+python prepare_data.py $rawDatabase --race-type-review docs/v2-race-type-review.csv --output data/processed/v2_flat_reviewed_distance_v2.db
 ```
 
-This creates 1,265,658 feature rows across train, validation, and test.
-Training selects only training rows; evaluation defaults to validation.
+Expected preparation results:
 
-These commands require new output paths. Skip completed exports when
-reusing existing files from the same dataset version and preparation rules.
+- Reviewed race exclusions: 25
+- Eligible races removed: 25
+- Runner rows removed: 267
+- Exported races: 126,109
+- Exported runner rows: 1,265,391
+
+Build all-history features, including age, previous-race information,
+and distance change:
+
+```powershell
+python build_features.py data/processed/v2_flat_reviewed_distance_v2.db --alpha 30 --features-output data/processed/v2_features_reviewed_distance_v2.db
+```
+
+Expected feature rows: 1,265,391.
+
+| Stored split | Dates | Runner rows |
+|---|---|---:|
+| train | 2015-01-01 through 2023-12-31 | 988,806 |
+| validation | 2024-01-01 through 2024-12-31 | 117,378 |
+| test | 2025-01-01 through 2026-05-27 | 159,207 |
+
+Historical features use only records from earlier dates.
+The `--alpha 30` setting controls the feature builder's smoothed-form
+diagnostic; it is not a boosting hyperparameter.
+
+The training commands below select rows by explicit date boundaries.
+The presence of later rows in the feature database does not make
+them training inputs.
+
+The period labelled `test` has already been examined in earlier
+development and should not be described as an untouched holdout.
+
+These commands require new output paths. Reuse existing exports
+only when they were created from the same dataset version,
+review decisions, and preparation code.
 
 ## Train and save
 
+These commands require the reviewed feature database:
+`data/processed/v2_features_reviewed_distance_v2.db`.
+
+Train the initial boosting configuration on dates before 2024:
+
 ```powershell
-python train_logistic.py data/processed/v2_features_all_splits.db --model-output outputs/models/v2_logistic_relative_finish_corrected.pkl
+python train_boosting.py data/processed/v2_features_reviewed_distance_v2.db --train-end 2024-01-01 --evaluation-end 2025-01-01 --feature-set relative_finish_age_distance_change --max-iter 200 --model-output outputs/models/v2_hist_boosting_initial.pkl
 ```
 
-The model-output path must not already exist.
+Omit `--parameters` to use the initial boosting configuration.
+The model-output path must not already exist. Reuse an existing
+matching model to skip retraining.
 
 ## Evaluate without retraining
 
+Evaluate the saved model and export its uncalibrated,
+race-normalized validation probabilities:
+
 ```powershell
-python evaluate_saved.py data/processed/v2_features_all_splits.db outputs/models/v2_logistic_relative_finish_corrected.pkl
+python evaluate_saved.py data/processed/v2_features_reviewed_distance_v2.db outputs/models/v2_hist_boosting_initial.pkl --evaluation-start 2024-01-01 --evaluation-end 2025-01-01 --predictions-output outputs/predictions/v2_hist_boosting_initial_validation.csv
 ```
 
-Expected 2024 validation results:
+Expected 2024 results:
+
 - Races: 11,637
-- Logistic race log loss: 2.160138
+- Runner predictions: 117,378
+- Uncalibrated boosting race log loss: 2.135187
 - Uniform race log loss: 2.253199
+
+The prediction-output path must not already exist. Reuse an
+existing matching export to skip this step.
 
 Only load trusted pickle files. Use the same package environment
 that created the saved model.
 
-To export validation probabilities for each runner:
+## Apply frozen probability calibration
+
+The repository includes:
+`outputs/reports/v2_initial_boosting_calibration.json`.
+
+This file contains the full-precision exponent fitted using
+2021–2023 chronological predictions from initial-settings
+boosting models. Apply it unchanged to the 2024 predictions:
 
 ```powershell
-python evaluate_saved.py data/processed/v2_features_all_splits.db outputs/models/v2_logistic_relative_finish_corrected.pkl --predictions-output outputs/predictions/v2_logistic_relative_finish_validation.csv
+python apply_calibration.py outputs/predictions/v2_hist_boosting_initial_validation.csv outputs/reports/v2_initial_boosting_calibration.json --year 2024 --output outputs/predictions/v2_hist_boosting_calibrated_validation.csv
 ```
 
+Expected results:
+
+- Original race log loss: 2.135187
+- Calibrated race log loss: 2.130549
+- Improvement: +0.004638
+- Exported runner predictions: 117,378
+
 The destination must not already exist. The CSV contains race
-identifiers, horse names, race-normalized win probabilities, and
-actual winner indicators. Expected prediction rows: 117,378.
+identifiers, horse names, calibrated win probabilities, and
+actual winner indicators.
+
+Calibration preserves runner rankings and normalizes probabilities
+to sum to one within each race. The calibration file belongs to
+the initial boosting model; it has not been validated for the
+Optuna-tuned model.
+
+2024 was excluded from calibration fitting but was examined during
+development. These results are not an untouched final assessment.
+See `v2-feature-audit.md` for comparisons and limitations.
 
 ## Run focused tests
 

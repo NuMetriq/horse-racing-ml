@@ -1,0 +1,40 @@
+{
+  "method": "race_probability_power",
+  "gamma": 1.2372283218810534,
+  "gamma_bounds": [
+    0.5,
+    2.0
+  ],
+  "base_model": "initial_hist_gradient_boosting",
+  "feature_set": "relative_finish_age_distance_change",
+  "fitting_years": [
+    2021,
+    2022,
+    2023
+  ],
+  "objective": "Equal-weight mean of annual race log losses",
+  "prediction_files": {
+    "2021": "C:\\Users\\Owner\\Documents\\NuMetriq\\horse-racing-ml\\outputs\\predictions\\v2_hist_boosting_calibration_2021.csv",
+    "2022": "C:\\Users\\Owner\\Documents\\NuMetriq\\horse-racing-ml\\outputs\\predictions\\v2_hist_boosting_calibration_2022.csv",
+    "2023": "C:\\Users\\Owner\\Documents\\NuMetriq\\horse-racing-ml\\outputs\\predictions\\v2_hist_boosting_calibration_2023.csv"
+  },
+  "original_mean_loss": 2.1199711055431396,
+  "adjusted_mean_loss": 2.115786289763001,
+  "annual_results": {
+    "2021": {
+      "races": 11776,
+      "original_loss": 2.1162837953919125,
+      "adjusted_loss": 2.110967191054767
+    },
+    "2022": {
+      "races": 11530,
+      "original_loss": 2.111592355538466,
+      "adjusted_loss": 2.10603068346287
+    },
+    "2023": {
+      "races": 10530,
+      "original_loss": 2.13203716569904,
+      "adjusted_loss": 2.1303609947713658
+    }
+  }
+}

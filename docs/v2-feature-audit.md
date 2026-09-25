@@ -640,3 +640,103 @@ at the planned budget. The bootstrap does not account for model
 
 selection, dependence across dates, or fitting uncertainty.
 
+
+
+\### Frozen race-probability calibration
+
+
+
+Fitted one power exponent using chronological predictions for
+
+2021–2023. Each year's predictions came from an initial-settings
+
+boosting model trained only on preceding years.
+
+
+
+The adjustment is:
+
+
+
+q\_i = p\_i^gamma / sum\_j(p\_j^gamma)
+
+
+
+The objective equally weights each year's mean race log loss.
+
+Gamma was searched within \[0.5, 2.0]; the fitted value was
+
+approximately 1.237228322. The full-precision value is saved in
+
+outputs/reports/v2\_initial\_boosting\_calibration.json.
+
+
+
+The exponent was frozen before application to 2024.
+
+
+
+| 2024 measure | Result |
+
+|---|---:|
+
+| Original boosting race log loss | 2.135187 |
+
+| Calibrated race log loss | 2.130549 |
+
+| Improvement | +0.004638 |
+
+| 95% paired date-bootstrap interval | \[+0.003014, +0.006257] |
+
+| Months improved | 11 of 12 |
+
+
+
+The bootstrap used 363 race dates, 10,000 resamples, and seed 42.
+
+
+
+| Calibrated probability bin | Runners | Mean predicted | Observed wins |
+
+|---|---:|---:|---:|
+
+| 0–5% | 23,973 | 3.63% | 3.58% |
+
+| 5–10% | 48,465 | 7.33% | 7.29% |
+
+| 10–15% | 25,442 | 12.17% | 12.29% |
+
+| 15–20% | 10,987 | 17.15% | 17.17% |
+
+| 20–30% | 6,749 | 23.65% | 23.48% |
+
+| 30–50% | 1,699 | 35.40% | 36.14% |
+
+| 50–100% | 63 | 56.55% | 50.79% |
+
+
+
+Decision: use initial boosting with frozen calibration as the
+
+current development model. Preserve the uncalibrated and tuned
+
+models as comparison artifacts.
+
+
+
+The adjustment preserves runner rankings and therefore does not
+
+change winner-selection accuracy. The highest probability bin is
+
+small, and pooled calibration does not establish subgroup calibration.
+
+
+
+2024 was excluded from calibration fitting but had already been
+
+examined during development. These results are not an untouched
+
+final assessment. The bootstrap does not account for selection,
+
+dependence across dates, or fitting uncertainty.
+

@@ -4,6 +4,7 @@ import csv
 
 import numpy as np
 
+from datetime import date as calendar_date
 from inspect_data import open_database
 from pathlib import Path
 from race_metrics import evaluate_race_scores
@@ -32,6 +33,14 @@ def main() -> None:
         choices=("validation", "test"),
         default="validation",
         help="Dataset split to evaluate (default: validation)",
+    )
+    parser.add_argument(
+        "--evaluation-start",
+        help="Inclusive evaluation date, YYYY-MM-DD; overrides --split",
+    )
+    parser.add_argument(
+        "--evaluation-end",
+        help="Exclusive evaluation date, YYYY-MM-DD; overrides --split",
     )
 
     args = parser.parse_args()
@@ -227,16 +236,73 @@ def main() -> None:
     connection = open_database(args.database.resolve())
 
     try:
-        rows = connection.execute(
-            f"""
-            SELECT date, course, off, horse,
-                   {feature_columns}, won
-            FROM features
-            WHERE split = ?
-            ORDER BY date, course, off, horse
-            """,
-            (args.split,),
-        ).fetchall()
+        start = args.evaluation_start
+        end = args.evaluation_end
+
+        if (start is None) != (end is None):
+            raise ValueError(
+                "Supply both --evaluation-start and --evaluation-end"
+            )
+
+        if start is not None:
+            try:
+                start_date = calendar_date.fromisoformat(start)
+                end_date = calendar_date.fromisoformat(end)
+            except ValueError as exc:
+                raise ValueError(
+                    "Evaluation dates must be valid YYYY-MM-DD dates"
+                ) from exc
+
+            if start_date >= end_date:
+                raise ValueError(
+                    "Evaluation start must be earlier than evaluation end"
+                )
+
+            training_end = bundle.get("training_end_exclusive")
+            if training_end is None:
+                raise ValueError(
+                    "Saved model is missing its training cutoff"
+                )
+
+            if start_date < calendar_date.fromisoformat(training_end):
+                raise ValueError(
+                    "Evaluation must start on or after the model's "
+                    "exclusive training cutoff"
+                )
+
+            evaluation_label = (
+                f"Evaluation [{start_date.isoformat()}, "
+                f"{end_date.isoformat()})"
+            )
+
+            rows = connection.execute(
+                f"""
+                SELECT date, course, off, horse,
+                       {feature_columns}, won
+                FROM features
+                WHERE date >= ? AND date < ?
+                ORDER BY date, course, off, horse
+                """,
+                (start_date.isoformat(), end_date.isoformat()),
+            ).fetchall()
+
+        else:
+            evaluation_label = args.split.capitalize()
+
+            rows = connection.execute(
+                f"""
+                SELECT date, course, off, horse,
+                       {feature_columns}, won
+                FROM features
+                WHERE split = ?
+                ORDER BY date, course, off, horse
+                """,
+                (args.split,),
+            ).fetchall()
+
+        if not rows:
+            raise ValueError("No runners in the selected evaluation period")
+
     finally:
         connection.close()
 
@@ -352,7 +418,7 @@ def main() -> None:
 
     model_loss, uniform_loss = evaluate_race_scores(race_scores)
 
-    print(f"{args.split.capitalize()} races: {len(race_scores):,}")
+    print(f"{evaluation_label} races: {len(race_scores):,}")
     print(f"Saved-model race log loss: {model_loss:.6f}")
     print(f"Uniform race log loss: {uniform_loss:.6f}")
 

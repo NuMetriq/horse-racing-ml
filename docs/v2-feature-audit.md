@@ -740,3 +740,61 @@ final assessment. The bootstrap does not account for selection,
 
 dependence across dates, or fitting uncertainty.
 
+
+
+\### History-coverage diagnostics
+
+
+
+Evaluated the initial boosting model with frozen calibration on
+
+2024 predictions, matched to the reviewed feature database.
+
+
+
+| Race group | Races | Model loss | Uniform loss | Improvement |
+
+|---|---:|---:|---:|---:|
+
+| Majority without history | 685 | 2.130063 | 2.222409 | +0.092347 |
+
+| Other races | 10,952 | 2.130579 | 2.255125 | +0.124546 |
+
+
+
+"Majority without history" means more than half the runners have
+
+prior\_starts = 0.
+
+
+
+| Runner group | Runners | Mean predicted | Observed wins | Observed minus predicted |
+
+|---|---:|---:|---:|---:|
+
+| No earlier recorded history | 11,937 | 8.65% | 7.86% | -0.79 pp |
+
+| Has earlier recorded history | 105,441 | 10.06% | 10.15% | +0.09 pp |
+
+
+
+The model overestimates win probabilities for runners without
+
+recorded history on average. Good pooled calibration does not
+
+guarantee calibration within history groups.
+
+
+
+Missing history refers to the selected dataset, not necessarily
+
+a horse's racing debut. These descriptive results do not identify
+
+the cause or establish statistical uncertainty.
+
+
+
+Exact runner keys and winner labels were checked against the
+
+feature database. No subgroup correction was fitted to 2024.
+

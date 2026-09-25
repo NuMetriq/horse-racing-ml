@@ -906,3 +906,59 @@ Runner lists must contain the complete active field. The saved
 
 calibration applies to the selected initial boosting model.
 
+
+
+\### Broader inference replay checks
+
+
+
+Selected four 2024 races by input characteristics rather than
+
+prediction errors:
+
+
+
+| Case | Date | Course | Off | Runners |
+
+|---|---|---|---|---:|
+
+| Small field | 2024-01-01 | Santa Anita (USA) | 11:43 | 5 |
+
+| Large field | 2024-01-01 | Ascot (AUS) | 9:02 | 16 |
+
+| Previous result code | 2024-01-13 | Chelmsford (AW) | 4:45 | 9 |
+
+| All runners have history | 2024-01-01 | Newcastle (AW) | 2:00 | 11 |
+
+
+
+Across these 41 runners:
+
+
+
+\- All 328 source-feature comparisons passed.
+
+\- All 82 probability comparisons matched exactly: uncalibrated
+
+&#x20; and calibrated probabilities for every runner.
+
+\- Prediction checks invoked the actual racecard CLI using
+
+&#x20; temporary CSV inputs and JSON reports.
+
+
+
+These checks establish agreement with the historical preparation
+
+and evaluation workflow for the selected cases. They do not
+
+establish predictive performance on new data or rule out errors
+
+shared by both workflows.
+
+
+
+The replay checks require local data, models, and prediction
+
+exports and are separate from the small fixture-based CI tests.
+
